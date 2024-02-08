@@ -1,0 +1,50 @@
+diff --git a/hw/deps/axi/src/axi_xbar.sv b/hw/deps/axi/src/axi_xbar.sv
+index 5d0b79c..dae08ec 100644
+--- a/hw/deps/axi/src/axi_xbar.sv
++++ b/hw/deps/axi/src/axi_xbar.sv
+@@ -41,7 +41,7 @@ module axi_xbar #(
+   input  logic      [Cfg.NoSlvPorts-1:0][$clog2(Cfg.NoMstPorts)-1:0] default_mst_port_i
+ );
+ 
+-  typedef logic [Cfg.AxiAddrWidth-1:0]           addr_t;
++  typedef logic [65-1:0]           addr_t;
+   // to account for the decoding error slave
+   typedef logic [$clog2(Cfg.NoMstPorts + 1)-1:0] mst_port_idx_t;
+ 
+diff --git a/hw/src/soc_dma_wrap.sv b/hw/src/soc_dma_wrap.sv
+index a6d03a7..d678275 100644
+--- a/hw/src/soc_dma_wrap.sv
++++ b/hw/src/soc_dma_wrap.sv
+@@ -15,23 +15,23 @@ import pspin_cfg_pkg::*;
+ 
+ module soc_dma_wrap #(
+     /// id width of the DMA AXI Master port
+-    parameter int unsigned DmaAxiIdWidth      = -1,
++    parameter int unsigned DmaAxiIdWidth      = 6,
+     /// data width of the DMA AXI Master port
+-    parameter int unsigned DmaDataWidth       = -1,
++    parameter int unsigned DmaDataWidth       = 512,
+     /// user width
+-    parameter int unsigned DmaUserWidth       = -1,
++    parameter int unsigned DmaUserWidth       = 4,
+     /// number of AX requests in-flight
+-    parameter int unsigned AxiAxReqDepth      = -1,
++    parameter int unsigned AxiAxReqDepth      = 12,
+     /// number of 1D transfers buffered in backend
+-    parameter int unsigned TfReqFifoDepth     = -1,
++    parameter int unsigned TfReqFifoDepth     = 64,
+     /// NHI data request type
+-    parameter type axi_nhi_req_t              = logic,
++    parameter type axi_nhi_req_t              = req_t,
+     /// NHI data response type
+-    parameter type axi_nhi_res_t              = logic,
++    parameter type axi_nhi_res_t              = resp_t,
+     /// host data request type (64 bit)
+-    parameter type axi_host_req_t             = logic,
++    parameter type axi_host_req_t             = host_req_t,
+     /// host data response type (64 bit)
+-    parameter type axi_host_res_t             = logic
++    parameter type axi_host_res_t             = host_resp_t
+ ) (
+     input  logic             clk_i,
+     input  logic             rst_ni,
