@@ -7,13 +7,19 @@ depth 50
 smtbmc
 
 [script]
-exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config -unset=assert_on'
+exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
 verific -f -sv veer.f
 verific -import -extnets veer_wrapper
 
 tee -o ../hierarchy.log hierarchy -top veer_wrapper
 
 prep -flatten
+
+tee -o ../props.txt log Cover cells:
+tee -a ../props.txt select t:$cover -list
+tee -a ../props.txt log
+tee -a ../props.txt log Assert cells:
+tee -a ../props.txt select t:$assert -list
 
 [file bind.sv]
 module formal_setup();
