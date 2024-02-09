@@ -8,7 +8,8 @@ pspin:
 .PHONY: patch
 patch: pspin
 	cd pspin \
-	&& git apply ../soc_dma_wrap.patch
+	&& git apply ../soc_dma_wrap.patch \
+	&& git apply ../riscv_core.patch
 
 .PHONY: clean
 clean: rm -rf pspin

@@ -1,0 +1,13 @@
+diff --git a/hw/deps/riscv/riscv_ex_stage.sv b/hw/deps/riscv/riscv_ex_stage.sv
+index 8afd4c8..c4af069 100644
+--- a/hw/deps/riscv/riscv_ex_stage.sv
++++ b/hw/deps/riscv/riscv_ex_stage.sv
+@@ -441,7 +441,7 @@ module riscv_ex_stage
+                          '{default: C_LAT_NONCOMP}, // NONCOMP
+                          '{default: C_LAT_CONV}},   // CONV
+             UnitTypes: '{'{default: fpnew_pkg::MERGED}, // ADDMUL
+-                         '{default: C_DIV},               // DIVSQRT
++                         '{default: FP_DIVSQRT ? fpnew_pkg::MERGED : fpnew_pkg::DISABLED},               // DIVSQRT
+                          '{default: fpnew_pkg::PARALLEL}, // NONCOMP
+                          '{default: fpnew_pkg::MERGED}},  // CONV
+             PipeConfig: fpnew_pkg::AFTER
