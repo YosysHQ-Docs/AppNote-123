@@ -1,7 +1,16 @@
 diff --git a/hw/deps/pulp_cluster/rtl/core_region.sv b/hw/deps/pulp_cluster/rtl/core_region.sv
-index 60f2293..cff1cad 100644
+index 60f2293..aa48877 100644
 --- a/hw/deps/pulp_cluster/rtl/core_region.sv
 +++ b/hw/deps/pulp_cluster/rtl/core_region.sv
+@@ -136,7 +136,7 @@ module core_region
+   end
+   logic [5:0] irq_ack_id;
+   assign irq_ack_id_o = irq_ack_id[4:0];
+-  assert property (@(posedge clk_i) irq_ack_o |-> !irq_ack_id[5]);
++  assert_core_irq_ack: assert property (@(posedge clk_i) irq_ack_o |-> !irq_ack_id[5]);
+   riscv_core #(
+     .N_EXT_PERF_COUNTERS ( 5                 ),
+     .FPU                 ( FPU               ),
 @@ -144,7 +144,7 @@ module core_region
      .SHARED_DSP_MULT     ( SHARED_DSP_MULT   ),
      .SHARED_INT_DIV      ( SHARED_INT_DIV    ),

@@ -41,6 +41,14 @@ if task == "riscv_core":
         "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_grant",
         "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_idle",
     ]
+if task == "core_region":
+    bad_asserts += [
+        "core_region_wrapper/core_region_i.assert_core_irq_ack",
+        "core_region_wrapper/core_region_i.RISCV_CORE.id_stage_i.assert_riscv_id_branch",
+        "core_region_wrapper/core_region_i.RISCV_CORE.if_stage_i.assert_riscv_if_req",
+        "core_region_wrapper/core_region_i.RISCV_CORE.load_store_unit_i.assert_riscv_lsu_grant",
+        "core_region_wrapper/core_region_i.RISCV_CORE.load_store_unit_i.assert_riscv_lsu_idle",
+    ]
 if bad_asserts:
     output(f"chformal -assert -assert2assume {' '.join(bad_asserts)}")
 --pycode-end--
