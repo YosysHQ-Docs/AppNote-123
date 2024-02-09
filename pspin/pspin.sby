@@ -1,8 +1,9 @@
 [tasks]
 base
 riscv_core : base
+core_region : riscv_core base
 soc_dma_wrap : base
-pspin_verilator : riscv_core soc_dma_wrap base
+pspin_verilator : core_region soc_dma_wrap base
 
 [options]
 base: 
@@ -115,6 +116,20 @@ deps/riscv/riscv_store_buffer.sv
 deps/riscv/riscv_core.sv
 --
 
+core_region:
+deps/pulp_cluster/packages/apu_package.sv
+deps/cluster_interconnect/rtl/interfaces/xbar_tcdm_bus.sv
+deps/cluster_interconnect/rtl/interfaces/xbar_periph_bus.sv
+deps/cluster_interconnect/rtl/interfaces/xbar_demux_bus.sv
+deps/pulp_cluster/rtl/cpu_marx_if.sv
+deps/pulp_cluster/rtl/periph_FIFO.sv
+deps/pulp_cluster/rtl/core_demux.sv
+deps/pulp_cluster/rtl/periph_demux.sv
+deps/pulp_cluster/rtl/inter_core_fifo.sv
+deps/pulp_cluster/rtl/virtual_stdout_demux.sv
+deps/pulp_cluster/rtl/core_region.sv
+--
+
 soc_dma_wrap:
 deps/axi/src/dma/frontends/pspin_soc_frontend/src/pspin_soc_dma.sv
 src/soc_dma_wrap.sv
@@ -143,10 +158,6 @@ src/pkt_scheduler/cluster_scheduler.sv
 src/pkt_scheduler/hpu_driver.sv
 src/cmds/cmd_unit.sv
 deps/pulp_cluster/packages/pulp_cluster_package.sv
-deps/pulp_cluster/packages/apu_package.sv
-deps/cluster_interconnect/rtl/interfaces/xbar_tcdm_bus.sv
-deps/cluster_interconnect/rtl/interfaces/xbar_periph_bus.sv
-deps/pulp_cluster/rtl/cpu_marx_if.sv
 deps/cluster_interconnect/rtl/interfaces/tcdm_bank_mem_bus.sv
 deps/cluster_interconnect/rtl/interfaces/wide_dma_tcdm.sv
 deps/cluster_peripherals/icache_ctrl_unit/interfaces/mp_pf_icache_ctrl_unit_bus.sv
@@ -204,13 +215,6 @@ deps/event_unit_flex/event_unit_top.sv
 deps/cluster_peripherals/icache_ctrl_unit/mp_pf_icache_ctrl_unit.sv
 deps/pulp_cluster/rtl/cluster_peripherals.sv
 src/cmds/cluster_cmd.sv
-deps/cluster_interconnect/rtl/interfaces/xbar_demux_bus.sv
-deps/pulp_cluster/rtl/periph_FIFO.sv
-deps/pulp_cluster/rtl/core_demux.sv
-deps/pulp_cluster/rtl/periph_demux.sv
-deps/pulp_cluster/rtl/inter_core_fifo.sv
-deps/pulp_cluster/rtl/virtual_stdout_demux.sv
-deps/pulp_cluster/rtl/core_region.sv
 deps/icache_mp_128_pf/RTL/icache_bank_mp_128.sv
 deps/scm/latch_scm/register_file_1w_multi_port_read.sv
 deps/icache-intc/Req_Arb_Node_icache_intc.sv

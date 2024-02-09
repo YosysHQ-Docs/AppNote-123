@@ -1,0 +1,26 @@
+diff --git a/hw/deps/pulp_cluster/rtl/core_region.sv b/hw/deps/pulp_cluster/rtl/core_region.sv
+index 60f2293..cff1cad 100644
+--- a/hw/deps/pulp_cluster/rtl/core_region.sv
++++ b/hw/deps/pulp_cluster/rtl/core_region.sv
+@@ -144,7 +144,7 @@ module core_region
+     .SHARED_DSP_MULT     ( SHARED_DSP_MULT   ),
+     .SHARED_INT_DIV      ( SHARED_INT_DIV    ),
+     .SHARED_FP_DIVSQRT   ( SHARED_FP_DIVSQRT ),
+-    .WAPUTYPE            ( WAPUTYPE          ),
++    .WAPUTYPE            ( apu_package::WAPUTYPE ),
+     .PULP_HWLP           ( 1                 ),
+     .N_PMP_ENTRIES       ( N_PMP_ENTRIES     )
+   ) RISCV_CORE (
+diff --git a/hw/deps/pulp_cluster/rtl/virtual_stdout_demux.sv b/hw/deps/pulp_cluster/rtl/virtual_stdout_demux.sv
+index ba7329b..6bc2fcf 100644
+--- a/hw/deps/pulp_cluster/rtl/virtual_stdout_demux.sv
++++ b/hw/deps/pulp_cluster/rtl/virtual_stdout_demux.sv
+@@ -21,7 +21,7 @@ module virtual_stdout_demux #(
+ );
+ 
+   `ifndef TARGET_SYNTHESIS
+-    `define VIRTUAL_STDOUT 
++    //`define VIRTUAL_STDOUT 
+   `endif
+   
+   `ifndef VIRTUAL_STDOUT
