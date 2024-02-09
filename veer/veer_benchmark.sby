@@ -15,11 +15,18 @@ tee -o ../hierarchy.log hierarchy -top veer_wrapper
 
 prep -flatten
 
+# dma_axi not setup correctly
+# convert axi asserts to assume
+chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
+
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
 tee -a ../props.txt log
 tee -a ../props.txt log Assert cells:
 tee -a ../props.txt select t:$assert -list
+tee -a ../props.txt log
+tee -a ../props.txt log Assume cells:
+tee -a ../props.txt select t:$assume -list
 
 [file bind.sv]
 module formal_setup();
