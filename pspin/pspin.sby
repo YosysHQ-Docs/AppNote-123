@@ -18,19 +18,41 @@ base: smtbmc
 riscv_core: verific -vlog-define PULP_FPGA_EMUL
 verific -f -formal pspin.f
 
+# top module assignment
 --pycode-begin--
-if(task):
+if task in ["core_region", "riscv_core"]:
+    output(f"verific -formal {task}_wrapper.sv")
+    output(f"verific -import {task}_wrapper")
+    output(f"hierarchy -top {task}_wrapper")
+elif task:
     output(f"verific -import -extnets {task}")
     output(f"hierarchy -top {task}")
 --pycode-end--
 
 prep -flatten
 
+# assert overrides
+--pycode-begin--
+bad_asserts = []
+if task == "riscv_core":
+    bad_asserts += [
+        "riscv_core_wrapper/RISCV_CORE.id_stage_i.assert_riscv_id_branch",
+        "riscv_core_wrapper/RISCV_CORE.if_stage_i.assert_riscv_if_req",
+        "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_grant",
+        "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_idle",
+    ]
+if bad_asserts:
+    output(f"chformal -assert -assert2assume {' '.join(bad_asserts)}")
+--pycode-end--
+
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
 tee -a ../props.txt log
 tee -a ../props.txt log Assert cells:
 tee -a ../props.txt select t:$assert -list
+tee -a ../props.txt log
+tee -a ../props.txt log Assume cells:
+tee -a ../props.txt select t:$assume -list
 
 [file pspin.f]
 base:
@@ -114,10 +136,10 @@ deps/riscv/include/riscv_tracer_defines.sv
 deps/riscv/riscv_tracer.sv
 deps/riscv/riscv_store_buffer.sv
 deps/riscv/riscv_core.sv
+deps/pulp_cluster/packages/apu_package.sv
 --
 
 core_region:
-deps/pulp_cluster/packages/apu_package.sv
 deps/cluster_interconnect/rtl/interfaces/xbar_tcdm_bus.sv
 deps/cluster_interconnect/rtl/interfaces/xbar_periph_bus.sv
 deps/cluster_interconnect/rtl/interfaces/xbar_demux_bus.sv
@@ -270,3 +292,8 @@ src/pspin_verilator.sv
 [files]
 pspin/hw/deps
 pspin/hw/src
+
+--pycode-begin--
+if(task in ["core_region", "riscv_core"]):
+    output(f"{task}_wrapper.sv")
+--pycode-end--

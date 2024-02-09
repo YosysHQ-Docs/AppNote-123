@@ -11,3 +11,56 @@ index 8afd4c8..c4af069 100644
                           '{default: fpnew_pkg::PARALLEL}, // NONCOMP
                           '{default: fpnew_pkg::MERGED}},  // CONV
              PipeConfig: fpnew_pkg::AFTER
+diff --git a/hw/deps/riscv/riscv_id_stage.sv b/hw/deps/riscv/riscv_id_stage.sv
+index 0c0df3b..9c33858 100644
+--- a/hw/deps/riscv/riscv_id_stage.sv
++++ b/hw/deps/riscv/riscv_id_stage.sv
+@@ -1666,11 +1666,11 @@ module riscv_id_stage
+   //----------------------------------------------------------------------------
+   `ifndef VERILATOR
+     // make sure that branch decision is valid when jumping
+-    assert property (
++    assert_riscv_id_branch : assert property (
+       @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) ) else begin $display("%t, Branch decision is X in module %m", $time); $stop; end
+ 
+     // the instruction delivered to the ID stage should always be valid
+-    assert property (
++    assert_riscv_id_instr : assert property (
+       @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else $display("Instruction is valid, but has at least one X");
+   `endif
+ endmodule
+diff --git a/hw/deps/riscv/riscv_if_stage.sv b/hw/deps/riscv/riscv_if_stage.sv
+index cef7739..a6731b5 100644
+--- a/hw/deps/riscv/riscv_if_stage.sv
++++ b/hw/deps/riscv/riscv_if_stage.sv
+@@ -421,7 +421,7 @@ module riscv_if_stage
+   //----------------------------------------------------------------------------
+   `ifndef VERILATOR
+     // there should never be a grant when there is no request
+-    assert property (
++    assert_riscv_if_req: assert property (
+       @(posedge clk) (instr_gnt_i) |-> (instr_req_o) )
+       else $warning("There was a grant without a request");
+   `endif
+diff --git a/hw/deps/riscv/riscv_load_store_unit.sv b/hw/deps/riscv/riscv_load_store_unit.sv
+index 06a9b6a..53e552b 100644
+--- a/hw/deps/riscv/riscv_load_store_unit.sv
++++ b/hw/deps/riscv/riscv_load_store_unit.sv
+@@ -324,14 +324,14 @@ module riscv_load_store_unit (
+   // Assertions
+   //`ifndef VERILATOR
+     // Make sure there is no new request when the old one is not yet completely done.
+-    assert property (@(posedge clk_i) state_q == WaitRValid && data_gnt_i |-> data_rvalid_i)
++    assert_riscv_lsu_grant : assert property (@(posedge clk_i) state_q == WaitRValid && data_gnt_i |-> data_rvalid_i)
+         else $warning("It should not be possible to get a grant without an rvalid for the last request!");
+ 
+-    assert property (@(posedge clk_i) state_q == Idle |-> !data_rvalid_i)
++    assert_riscv_lsu_idle : assert property (@(posedge clk_i) state_q == Idle |-> !data_rvalid_i)
+         else $warning("There should be no rvalid when the LSU is idle!");
+ 
+     // Assert that the address does not contain X when request is sent.
+-    assert property (@(posedge clk_i) data_req_o |-> !$isunknown(data_addr_o))
++    assert_riscv_lsu_addr : assert property (@(posedge clk_i) data_req_o |-> !$isunknown(data_addr_o))
+         else $error("There has been a data request but the address is unknown!");
+   //`endif
+ endmodule
