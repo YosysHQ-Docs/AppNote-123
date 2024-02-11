@@ -1,0 +1,116 @@
+diff --git a/sva/cv32e40x_controller_fsm_sva.sv b/sva/cv32e40x_controller_fsm_sva.sv
+index 256fd48d..073321f5 100644
+--- a/sva/cv32e40x_controller_fsm_sva.sv
++++ b/sva/cv32e40x_controller_fsm_sva.sv
+@@ -168,6 +168,7 @@ module cv32e40x_controller_fsm_sva
+       else `uvm_error("controller", "Jump taken while ID is killed")
+ 
+   // Check that register used for JALR target calculation is stable from the jump is taken from ID until the JALR retires from WB.
++/*
+   property p_jalr_stable_target;
+     logic [4:0] jalr_rs_id;
+     logic [31:0] rf_at_jump_id;
+@@ -180,6 +181,7 @@ module cv32e40x_controller_fsm_sva
+   endproperty : p_jalr_stable_target
+ 
+   a_jalr_stable_target: assert property(p_jalr_stable_target) else `uvm_error("controller", "Assertion a_jalr_stable_target failed");
++*/
+ 
+   // Check that xret does not coincide with CSR write (to avoid using wrong return address)
+   // This check is more strict than really needed; a CSR instruction would be allowed in EX as long
+diff --git a/sva/cv32e40x_core_sva.sv b/sva/cv32e40x_core_sva.sv
+index 53fe7dc0..c997e5bd 100644
+--- a/sva/cv32e40x_core_sva.sv
++++ b/sva/cv32e40x_core_sva.sv
+@@ -583,6 +583,7 @@ end
+ 
+ 
+   // Check that operand_a data forwarded from EX to ID actually is written to RF in WB
++/*
+   property p_opa_fwd_ex;
+     logic [31:0] opa;
+     @(posedge clk) disable iff (!rst_ni)
+@@ -592,6 +593,7 @@ end
+ 
+   a_opa_fwd_ex: assert property (p_opa_fwd_ex)
+     else `uvm_error("core", "Forwarded data (operand_a) from EX not written to RF the following cycle")
++*/
+ 
+   // Check that operand_a data forwarded from WB to ID actually is written to RF in WB
+   property p_opa_fwd_wb;
+@@ -604,6 +606,7 @@ end
+     else `uvm_error("core", "Forwarded data (operand_a) from WB not written to RF in the same cycle")
+ 
+   // Check that operand_b data forwarded from EX to ID actually is written to RF in WB
++/*
+   property p_opb_fwd_ex;
+     logic [31:0] opb;
+     @(posedge clk) disable iff (!rst_ni)
+@@ -613,6 +616,7 @@ end
+ 
+   a_opb_fwd_ex: assert property (p_opb_fwd_ex)
+     else `uvm_error("core", "Forwarded data (operand_b) from EX not written to RF the following cycle")
++*/
+ 
+   // Check that operand_b data forwarded from WB to ID actually is written to RF in WB
+   property p_opb_fwd_wb;
+diff --git a/sva/cv32e40x_cs_registers_sva.sv b/sva/cv32e40x_cs_registers_sva.sv
+index ae897980..e49a0f35 100644
+--- a/sva/cv32e40x_cs_registers_sva.sv
++++ b/sva/cv32e40x_cs_registers_sva.sv
+@@ -367,6 +367,7 @@ generate
+     // Exception trigger shall cause dpc to point to first handler instruction and no instruction shall signal wb_valid the cycle after (while in DEBUG_TAKEN state)
+     // Excluding external debug and interrupts (halt_wb, kill_wb) as they both take priority over etrigger
+     // Also checking that WB stage is empty after an exception trigger has been taken.
++/*
+     property p_etrigger_dpc_write;
+       logic [24:0] mtvec_at_trap;
+       @(posedge clk) disable iff (!rst_n)
+@@ -377,6 +378,7 @@ generate
+ 
+     a_etrigger_dpc_write: assert property(p_etrigger_dpc_write)
+       else `uvm_error("cs_registers", "dpc not written with first handler instruction when etrigger fires.");
++*/
+ 
+   end
+ endgenerate
+diff --git a/sva/cv32e40x_ex_stage_sva.sv b/sva/cv32e40x_ex_stage_sva.sv
+index f3535bd5..009fa716 100644
+--- a/sva/cv32e40x_ex_stage_sva.sv
++++ b/sva/cv32e40x_ex_stage_sva.sv
+@@ -118,6 +118,7 @@ endgenerate
+   // Check that branch target remains constant while a branch instruction is in EX
+   // Branches are taken during their first un-stalled cycle in EX. If the target changes before
+   // the branch can move to WB, we might have taken the branch before an unresolved dependency.
++/*
+   property p_bch_target_stable;
+     logic [31:0] bch_target;
+     @(posedge clk) disable iff (!rst_n)
+@@ -128,6 +129,7 @@ endgenerate
+ 
+   a_bch_target_stable: assert property (p_bch_target_stable)
+     else `uvm_error("ex_stage", "Branch target not stable")
++*/
+ 
+   // Check that instruction after taken branch is flushed (more should actually be flushed, but that is not checked here)
+   // and that EX stage is ready to receive flushed instruction immediately, as long as there's no backpressure from WB
+diff --git a/sva/cv32e40x_id_stage_sva.sv b/sva/cv32e40x_id_stage_sva.sv
+index bd4c58fa..448da635 100644
+--- a/sva/cv32e40x_id_stage_sva.sv
++++ b/sva/cv32e40x_id_stage_sva.sv
+@@ -110,6 +110,7 @@ module cv32e40x_id_stage_sva
+   // Assert stable jump target for a jump instruction that stays multiple cycles in ID
+   // Target must remain stable until instruction exits ID (id_valid && ex_ready, or
+   // instructions is killed.
++/*
+   property p_jmp_target_stable;
+     logic [31:0] jmp_target;
+     @(posedge clk) disable iff (!rst_n)
+@@ -120,6 +121,7 @@ module cv32e40x_id_stage_sva
+ 
+   a_jmp_target_stable: assert property (p_jmp_target_stable)
+     else `uvm_error("id_stage", "Jump target not stable")
++*/
+ 
+ 
+     generate

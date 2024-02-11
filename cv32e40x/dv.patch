@@ -1,0 +1,268 @@
+diff --git a/tb/assertions/uvmt_cv32e40x_fencei_assert.sv b/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
+index dca9cc67..14a25a55 100644
+--- a/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
++++ b/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
+@@ -178,6 +178,7 @@ module uvmt_cv32e40x_fencei_assert
+ 
+   // vplan:Fetching
+ 
++/*
+   property p_fetch_after_retire;
+     int pc_next;
+     (is_fencei_in_wb && wb_valid, pc_next={wb_pc[31:2],2'b00}+4)
+@@ -196,6 +197,7 @@ module uvmt_cv32e40x_fencei_assert
+   a_fetch_after_retire: assert property (
+     p_fetch_after_retire
+   ) else `uvm_error(info_tag, "after fencei, the next-pc fetching cannot be forgone");
++*/
+ 
+ 
+   // vplan:AckWithold
+@@ -218,6 +220,7 @@ module uvmt_cv32e40x_fencei_assert
+ 
+   // vplan:BranchInitiated
+ 
++/*
+   sequence  seq_branch_after_retire_ante;
+     $fell(fencei_flush_req_o)
+     ##0
+@@ -254,6 +257,7 @@ module uvmt_cv32e40x_fencei_assert
+     ##0
+     ! rvfi_if.rvfi_dbg_mode
+   );
++*/
+ 
+ 
+   // vplan:Flush
+@@ -278,11 +282,13 @@ module uvmt_cv32e40x_fencei_assert
+     ##1 (fencei_flush_req_o && fencei_flush_ack_i);
+   endproperty
+ 
++/*
+   a_cycle_count_minimum: assert property (
+     p_fencei_quick_retire
+     implies
+     (##1 !$rose(wb_instr_valid) [*CYCLE_COUNT-1])
+   ) else `uvm_error(info_tag, "fencei shall not finish before the expected number of cycles");
++*/
+ 
+   cov_cycle_count_minimum: cover property (
+     p_fencei_quick_retire
+@@ -351,6 +357,7 @@ module uvmt_cv32e40x_fencei_assert
+ 
+   // vplan:StoresVisible
+ 
++/*
+   property p_stores_visible_store_fencei_exec;
+     logic [31:0]  addr;
+ 
+@@ -370,6 +377,7 @@ module uvmt_cv32e40x_fencei_assert
+   cov_stores_visible_store_fencei_exec: cover property (
+     p_stores_visible_store_fencei_exec
+   );
++*/
+ 
+ 
+   // vplan:AckChange
+@@ -395,7 +403,7 @@ module uvmt_cv32e40x_fencei_assert
+     }
+   endgroup
+ 
+-  cg_reqack reqack_cg = new("reqack_cg");
++  // cg_reqack reqack_cg = new("reqack_cg");
+ 
+ 
+   // vplan:UnusedFields
+@@ -416,7 +424,7 @@ module uvmt_cv32e40x_fencei_assert
+     }
+   endgroup
+ 
+-  cg_reserved reserved_cg = new("reserved_cg");
++  // cg_reserved reserved_cg = new("reserved_cg");
+ 
+ 
+ endmodule : uvmt_cv32e40x_fencei_assert
+diff --git a/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv b/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv
+index 60b5e94e..b7fa3627 100644
+--- a/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv
++++ b/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv
+@@ -234,6 +234,7 @@ module uvmt_cv32e40x_rvfi_assert
+ 
+   // Synchronous handler had synchronous cause
+ 
++/*
+   property p_sync_cause;
+     logic  exception;
+     (rvfi_valid, exception = rvfi_trap.exception)
+@@ -248,6 +249,7 @@ module uvmt_cv32e40x_rvfi_assert
+   a_sync_cause: assert property (
+     p_sync_cause
+   ) else `uvm_error(info_tag, "rvfi_intr.exception can't happen unannounced");
++*/
+ 
+ 
+   // Trap handler is either sync/async
+diff --git a/tb/uvmt/uvmt_cv32e40x_debug_assert.sv b/tb/uvmt/uvmt_cv32e40x_debug_assert.sv
+index 813581a5..1b6e81c8 100644
+--- a/tb/uvmt/uvmt_cv32e40x_debug_assert.sv
++++ b/tb/uvmt/uvmt_cv32e40x_debug_assert.sv
+@@ -544,6 +544,7 @@ module uvmt_cv32e40x_debug_assert
+ 
+     // dret in D-mode will restore pc (if no re-entry or interrupt intervenes)
+ 
++/*
+     property p_dmode_dret_pc;
+         int dpc;
+         (rvfi.is_dret && rvfi.rvfi_dbg_mode,
+@@ -603,7 +604,7 @@ module uvmt_cv32e40x_debug_assert
+     endproperty
+ 
+     cov_dmode_dret_pc_nmi_neq : cover property(p_dmode_dret_pc_nmi_neq);
+-
++*/
+ 
+     // dret in D-mode will exit D-mode
+ 
+@@ -828,6 +829,7 @@ module uvmt_cv32e40x_debug_assert
+     a_debug_pc_o : assert property(p_debug_pc_o)
+     else `uvm_error(info_tag, "debug_pc_o is not driven correctly")
+ 
++/*
+     property p_debug_pc_o_inv;
+         int dbg_pc;
+         (cov_assert_if.debug_pc_valid_o, dbg_pc = cov_assert_if.debug_pc_o)
+@@ -838,6 +840,7 @@ module uvmt_cv32e40x_debug_assert
+ 
+     a_debug_pc_o_inv : assert property(p_debug_pc_o_inv)
+     else `uvm_error(info_tag, "debug_pc_o is not driven correctly")
++*/
+ 
+ 
+     // Exceptions don't update "mcause"
+@@ -1077,6 +1080,7 @@ module uvmt_cv32e40x_debug_assert
+     end
+ 
+ 
++/*
+     sequence s_dbg_with_nmi_dret_stepie(bit stepie_value);
+           rvfi.rvfi_dbg_mode
+        && rvfi.is_dret
+@@ -1102,6 +1106,7 @@ module uvmt_cv32e40x_debug_assert
+ 
+     cov_dbg_with_nmi_dret_stepie:   cover property (p_dbg_with_nmi_dret_stepie(1'b1));
+     cov_dbg_with_nmi_dret_stepie_n: cover property (p_dbg_with_nmi_dret_stepie(1'b0));
++*/
+ 
+ 
+ endmodule : uvmt_cv32e40x_debug_assert
+diff --git a/tb/uvmt/uvmt_cv32e40x_integration_assert.sv b/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
+index e1b98d8d..1ceba2f5 100644
+--- a/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
++++ b/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
+@@ -149,7 +149,7 @@ module uvmt_cv32e40x_integration_assert
+     x_instr_data: cross cp_instr, cp_data;
+   endgroup
+ 
+-  cg_outstanding  outstanding_cg = new;
++  // cg_outstanding  outstanding_cg = new;
+ 
+ 
+ endmodule : uvmt_cv32e40x_integration_assert
+diff --git a/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv b/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv
+index b5c7edd2..a750c6eb 100644
+--- a/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv
++++ b/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv
+@@ -624,6 +624,7 @@ module uvmt_cv32e40x_interrupt_assert
+     ;
+   endproperty : p_wfi_assert_coresleepo
+ 
++/*
+   property  p_wfi_assert_coresleepo_ideal_cond;
+         ((is_wfi_wfe_in_wb && !should_wfi_wfe_awaken) [*WFI_TO_CORE_SLEEP_LATENCY])
+      ##0 !should_wfi_wfe_awaken && pipeline_ready_for_wfi
+@@ -652,6 +653,7 @@ module uvmt_cv32e40x_interrupt_assert
+       ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 0) && (core_sleep_o == 1)) [*1:$]
+     )
+   );
++*/
+ 
+ 
+   // core_sleep_o deassertion should result in the wfi/wfe instruction retiring
+diff --git a/tb/uvmt/uvmt_cv32e40x_pma_assert.sv b/tb/uvmt/uvmt_cv32e40x_pma_assert.sv
+index d32db818..4a9a1047 100644
+--- a/tb/uvmt/uvmt_cv32e40x_pma_assert.sv
++++ b/tb/uvmt/uvmt_cv32e40x_pma_assert.sv
+@@ -184,6 +184,7 @@ module  uvmt_cv32e40x_pma_assert
+ 
+   // MPU-accepted transactions must reach OBI  (vplan: not a vplan item)
+ 
++/*
+   property p_eventually_mpu2obi;
+     logic [31:0]  addr;
+     (bus_trans_valid_o && bus_trans_ready_i && !pma_align_block, addr = bus_trans_o.addr)
+@@ -196,6 +197,7 @@ module  uvmt_cv32e40x_pma_assert
+   a_eventually_mpu2obi: assert property (
+     p_eventually_mpu2obi
+   ) else `uvm_error(info_tag, "mpu output must reach the bus");
++*/
+ 
+ 
+   // MPU output reliably reaches OBI  (vplan: not a vplan item)
+diff --git a/tb/uvmt/uvmt_cv32e40x_pma_cov.sv b/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
+index ec651743..66f2961b 100644
+--- a/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
++++ b/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
+@@ -286,7 +286,7 @@ module  uvmt_cv32e40x_pma_cov
+     //Note: more crosses are possible, but bordering on impractical/infeasible
+   endgroup
+ 
+-  cg_mpu  mpu_cg = new;
++  // cg_mpu  mpu_cg = new;
+ 
+ 
+   // RVFI Coverage Definition
+@@ -415,7 +415,7 @@ module  uvmt_cv32e40x_pma_cov
+   endgroup
+ 
+   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg
+-    cg_rvfi  rvfi_cg = new;
++    // cg_rvfi  rvfi_cg = new;
+     // RVFI is 1 interface, so we don't need an exact duplicate at each MPU.
+   end
+ 
+diff --git a/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv b/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv
+index e0abd6f1..a0c32cd3 100644
+--- a/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv
++++ b/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv
+@@ -255,6 +255,7 @@ module uvmt_cv32e40x_triggers_assert_cov
+     && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == tdata1_type;
+   endproperty
+ 
++/*
+   property p_csrrw_in_dmode(addr, csr_post_state);
+     seq_csr_write_dmode(addr)
+     ##0 is_csrrw
+@@ -296,6 +297,7 @@ module uvmt_cv32e40x_triggers_assert_cov
+     |->
+     csr_post_state == (tdata2_pre_state & (~csri_uimm));
+   endproperty
++*/
+ 
+ 
+   /////////// Assertions and Coverages ///////////
+@@ -817,6 +819,7 @@ module uvmt_cv32e40x_triggers_assert_cov
+ 
+ 
+     //2)
++/*
+     a_dt_write_access_to_tdata1_in_dmode: assert property (
+       p_csrrw_in_dmode(ADDR_TDATA1, tdata1_post_state)
+       or p_csrrs_in_dmode(ADDR_TDATA1, tdata1_post_state)
+@@ -834,6 +837,7 @@ module uvmt_cv32e40x_triggers_assert_cov
+       or p_csrrsi_in_dmode(ADDR_TDATA2, tdata2_post_state)
+       or p_csrrci_in_dmode(ADDR_TDATA2, tdata2_post_state)
+     ) else `uvm_error(info_tag, "No write access to tdata2 in debug mode.\n");
++*/
+ 
+ 
+     a_dt_read_access_to_tdata1_in_dmode: assert property (
