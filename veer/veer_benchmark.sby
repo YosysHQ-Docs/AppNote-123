@@ -1,10 +1,22 @@
+[tasks]
+bmc
+pdr
+target : bmc
+
 [options]
+bmc:
 mode bmc
 multiclock on
 depth 50
+--
+pdr:
+mode prove
+multiclock on
+--
 
 [engines]
-smtbmc
+bmc: smtbmc
+pdr: abc pdr
 
 [script]
 exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
@@ -18,6 +30,7 @@ prep -flatten
 # dma_axi not setup correctly
 # convert axi asserts to assume
 chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
+~target: chformal -assert -assert2assume veer_wrapper/formal_setup_inst.target
 
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
