@@ -7,8 +7,14 @@ bmc: mode bmc
 pdr: mode prove
 multiclock on
 
+# fst is faster than vcd for large designs
+fst on
+vcd off
+# if vcd is required 'vcd_sim on' is a faster alternative to 'vcd off'
+
 [engines]
-bmc: smtbmc
+# keep going to continue after failed assertions
+bmc: smtbmc --keep-going
 pdr: abc pdr
 
 [script]
@@ -19,9 +25,25 @@ verific -set-info VERI-8026
 verific -set-info WNL018
 
 verific -f -sv2012 -formal cv32e40x.f
+
+# formal clock and reset setup
+verific -formal formal_setup.sv
+
+
 verific -import -extnets uvmt_cv32e40x_tb
 
+# this hierarchy and flatten work around an issue with SV interfaces
+hierarchy -top uvmt_cv32e40x_tb
+flatten
+
 prep -flatten
+
+# adapted from the 'assume  -from_assert' commands in jaspergold.tcl
+chformal -assert2assume */*_memory_assert_i.u_assert.a_r_after_a
+chformal -assert2assume */*.obi_*_memory_assert_i.*.a_*par
+chformal -assert2assume */*integration_assert_i.a_stable_*
+chformal -assert2assume */*integration_assert_i.a_aligned_*
+chformal -assert2assume */*integration_assert_i.a_no_scan_cg
 
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
@@ -71,3 +93,25 @@ ${DV_UVMT_PATH}/uvmt_cv32e40x_tb_ifs.sv
 core-v-verif/cv32e40x/fv/uvm_pkg.sv
 core-v-verif/cv32e40x/fv/defines.sv
 core-v-verif/cv32e40x/fv/dummy_pkg.sv
+
+[file formal_setup.sv]
+module formal_setup();
+    (* gclk *) reg gclk;
+    reg clk = '0;
+    always @(posedge gclk)
+        clk <= !clk;
+
+    reg [3:0] rst_counter = 2;
+    always @(posedge clk)
+        if (rst_counter)
+            rst_counter -= 1;
+
+    wire rst = rst_counter > 0;
+
+    always @* begin
+        setup_clk: assume (uvmt_cv32e40x_tb.clknrst_if.clk == clk);
+        setup_rst: assume (uvmt_cv32e40x_tb.clknrst_if.reset_n == !rst);
+    end
+
+endmodule
+bind uvmt_cv32e40x_tb formal_setup formal_setup_inst(.*);
