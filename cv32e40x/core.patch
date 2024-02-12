@@ -1,3 +1,23 @@
+diff --git a/bhv/cv32e40x_sim_clock_gate.sv b/bhv/cv32e40x_sim_clock_gate.sv
+index 01372a10..55a0c065 100644
+--- a/bhv/cv32e40x_sim_clock_gate.sv
++++ b/bhv/cv32e40x_sim_clock_gate.sv
+@@ -31,6 +31,14 @@ module cv32e40x_clock_gate
+        clk_en <= en_i | scan_cg_en_i;
+   end
+ 
+-  assign clk_o = clk_i & clk_en;
++  (* gclk *)
++  logic gclk;
++  logic clk_en_gd;
++
++  always @(posedge gclk)
++    clk_en_gd <= clk_en;
++
++
++  assign clk_o = clk_i & clk_en_gd;
+ 
+ endmodule // cv32e40x_clock_gate
 diff --git a/sva/cv32e40x_controller_fsm_sva.sv b/sva/cv32e40x_controller_fsm_sva.sv
 index 256fd48d..073321f5 100644
 --- a/sva/cv32e40x_controller_fsm_sva.sv
