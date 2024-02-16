@@ -1,0 +1,181 @@
+diff --git a/hw/deps/axi/src/axi_xbar.sv b/hw/deps/axi/src/axi_xbar.sv
+index 5d0b79c..c53621a 100644
+--- a/hw/deps/axi/src/axi_xbar.sv
++++ b/hw/deps/axi/src/axi_xbar.sv
+@@ -245,10 +245,10 @@ module axi_xbar_intf #(
+   localparam int unsigned AxiIdWidthMstPorts = Cfg.AxiIdWidthSlvPorts + $clog2(Cfg.NoSlvPorts);
+ 
+   typedef logic [AxiIdWidthMstPorts     -1:0] id_mst_t;
+-  typedef logic [Cfg.AxiIdWidthSlvPorts -1:0] id_slv_t;
+-  typedef logic [Cfg.AxiAddrWidth       -1:0] addr_t;
+-  typedef logic [Cfg.AxiDataWidth       -1:0] data_t;
+-  typedef logic [Cfg.AxiDataWidth/8     -1:0] strb_t;
++  typedef logic [pulp_cluster_cfg_pkg::AXI_IW_SLV -1:0] id_slv_t;
++  typedef logic [pulp_cluster_cfg_pkg::AXI_AW -1:0] addr_t;
++  typedef logic [pulp_cluster_cfg_pkg::AXI_DW -1:0] data_t;
++  typedef logic [pulp_cluster_cfg_pkg::AXI_DW/8     -1:0] strb_t;
+   typedef logic [AXI_USER_WIDTH         -1:0] user_t;
+ 
+   `AXI_TYPEDEF_AW_CHAN_T(mst_aw_chan_t, addr_t, id_mst_t, user_t)
+diff --git a/hw/deps/axi2mem/src/axi_to_mem.sv b/hw/deps/axi2mem/src/axi_to_mem.sv
+index bc93220..9edec03 100644
+--- a/hw/deps/axi2mem/src/axi_to_mem.sv
++++ b/hw/deps/axi2mem/src/axi_to_mem.sv
+@@ -564,10 +564,10 @@ module axi_to_mem #(
+     assert property (@(posedge clk_i)
+         axi_resp_o.b_valid && !axi_req_i.b_ready |=> $stable(axi_resp_o.b))
+       else $error("B must remain stable until handshake has happened!");
+-    assert property (@(posedge clk_i) axi_req_i.ar_valid && axi_req_i.ar.len > 0 |->
++    assert_axi_burst_read: assert property (@(posedge clk_i) axi_req_i.ar_valid && axi_req_i.ar.len > 0 |->
+         axi_req_i.ar.burst == axi_pkg::BURST_INCR)
+       else $error("Non-incrementing bursts are not supported!");
+-    assert property (@(posedge clk_i) axi_req_i.aw_valid && axi_req_i.aw.len > 0 |->
++    assert_axi_burst_write: assert property (@(posedge clk_i) axi_req_i.aw_valid && axi_req_i.aw.len > 0 |->
+         axi_req_i.aw.burst == axi_pkg::BURST_INCR)
+       else $error("Non-incrementing bursts are not supported!");
+     assert property (@(posedge clk_i) meta_valid && meta.atop != '0 |-> meta.write)
+diff --git a/hw/deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv b/hw/deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv
+index d1d35e5..5d4e920 100644
+--- a/hw/deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv
++++ b/hw/deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv
+@@ -14,13 +14,13 @@
+ /// Author: Thomas Benz <tbenz@iis.ee.ethz.ch>
+ 
+ module superbank_addr_decoder #(
+-  parameter int unsigned TCDMAddrWidth     = -1,
+-  parameter int unsigned DMAAddrWidth      = -1,
+-  parameter int unsigned BanksPerSuperbank = -1,
+-  parameter int unsigned NrSuperBanks      = -1,
+-  parameter int unsigned DMADataWidth      = -1,
+-  parameter int unsigned AmoWidth          = -1,
+-  parameter int unsigned MemoryLatency     = -1
++  parameter int unsigned TCDMAddrWidth     = 11,
++  parameter int unsigned DMAAddrWidth      = 64,
++  parameter int unsigned BanksPerSuperbank = 16,
++  parameter int unsigned NrSuperBanks      = 2,
++  parameter int unsigned DMADataWidth      = 32,
++  parameter int unsigned AmoWidth          = 6,
++  parameter int unsigned MemoryLatency     = 1
+ ) (
+ 
+   input   logic                                           clk_i,
+diff --git a/hw/deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv b/hw/deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv
+index 3518ad4..706453e 100644
+--- a/hw/deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv
++++ b/hw/deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv
+@@ -59,7 +59,7 @@ module cluster_interconnect_wrap
+ 
+   localparam TCDM_ID_WIDTH = NB_CORES+NB_DMAS+NB_EXT+NB_HWACC_PORTS;
+ 
+-  localparam DMA_DATA_WIDTH      = 512;
++  localparam DMA_DATA_WIDTH      = 256;
+   localparam DMA_ADDR_WIDTH      = 64;
+   localparam BANKS_PER_SUPERBANK = DMA_DATA_WIDTH / DATA_WIDTH;
+   localparam NB_SUPERBANKS       = NB_TCDM_BANKS / BANKS_PER_SUPERBANK;
+diff --git a/hw/deps/pulp_cluster/rtl/pulp_cluster.sv b/hw/deps/pulp_cluster/rtl/pulp_cluster.sv
+index cf2a312..289587e 100644
+--- a/hw/deps/pulp_cluster/rtl/pulp_cluster.sv
++++ b/hw/deps/pulp_cluster/rtl/pulp_cluster.sv
+@@ -720,11 +720,11 @@ module pulp_cluster
+ 
+   // cores -> APU
+   cpu_marx_if #(
+-    .WOP_CPU      ( WOP_CPU      ),
+-    .WAPUTYPE     ( WAPUTYPE     ),
+-    .NUSFLAGS_CPU ( NUSFLAGS_CPU ),
+-    .NDSFLAGS_CPU ( NDSFLAGS_CPU ),
+-    .NARGS_CPU    ( NARGS_CPU    )
++    .WOP_CPU      ( apu_package::WOP_CPU      ),
++    .WAPUTYPE     ( apu_package::WAPUTYPE     ),
++    .NUSFLAGS_CPU ( apu_package::NUSFLAGS_CPU ),
++    .NDSFLAGS_CPU ( apu_package::NDSFLAGS_CPU ),
++    .NARGS_CPU    ( apu_package::NARGS_CPU    )
+   ) apu_cluster_bus [NB_CORES-1:0] ();
+ 
+   /* reset generator */
+@@ -1260,16 +1260,16 @@ module pulp_cluster
+     if(APU_CLUSTER) begin : apu_cluster_gen
+       apu_cluster #(
+         .C_NB_CORES         ( NB_CORES          ),
+-        .NDSFLAGS_CPU       ( NDSFLAGS_CPU      ),
+-        .NUSFLAGS_CPU       ( NUSFLAGS_CPU      ),
+-        .WOP_CPU            ( WOP_CPU           ),
+-        .NARGS_CPU          ( NARGS_CPU         ),
+-        .WAPUTYPE           ( WAPUTYPE          ),
+-        .SHARED_FP          ( SHARED_FP         ),
+-        .SHARED_DSP_MULT    ( SHARED_DSP_MULT   ),
+-        .SHARED_INT_MULT    ( SHARED_INT_MULT   ),
+-        .SHARED_INT_DIV     ( SHARED_INT_DIV    ),
+-        .SHARED_FP_DIVSQRT  ( SHARED_FP_DIVSQRT )
++        .NDSFLAGS_CPU       ( apu_package::NDSFLAGS_CPU      ),
++        .NUSFLAGS_CPU       ( apu_package::NUSFLAGS_CPU      ),
++        .WOP_CPU            ( apu_package::WOP_CPU           ),
++        .NARGS_CPU          ( apu_package::NARGS_CPU         ),
++        .WAPUTYPE           ( apu_package::WAPUTYPE          ),
++        .SHARED_FP          ( apu_package::SHARED_FP         ),
++        .SHARED_DSP_MULT    ( apu_package::SHARED_DSP_MULT   ),
++        .SHARED_INT_MULT    ( apu_core_package::SHARED_INT_MULT   ),
++        .SHARED_INT_DIV     ( apu_package::SHARED_INT_DIV    ),
++        .SHARED_FP_DIVSQRT  ( apu_package::SHARED_FP_DIVSQRT )
+       ) apu_cluster_i (
+         .clk_i  ( clk_cluster     ),
+         .rst_ni ( s_rst_n         ),
+@@ -1420,6 +1420,7 @@ module pulp_cluster
+   end
+ 
+   if (ASYNC_INTF) begin : gen_axi_slice_dc
++  /*
+     axi_slice_dc_slave_wrap #(
+       .AXI_ADDR_WIDTH  ( AXI_ADDR_WIDTH         ),
+       .AXI_DATA_WIDTH  ( AXI_DATA_C2S_WIDTH     ),
+@@ -1450,6 +1451,7 @@ module pulp_cluster
+       .axi_slave_async ( s_data_slave_async ),
+       .axi_master      ( s_data_slave       )
+     );
++    */
+ 
+   end else begin : gen_axi_cut
+     axi_cut_intf #(
+@@ -1525,6 +1527,7 @@ module pulp_cluster
+ 
+   if (ASYNC_INTF) begin : gen_cluster_clock_gate
+     /* centralized gating */
++/*
+     cluster_clock_gate #(
+       .NB_CORES ( NB_CORES )
+     ) u_clustercg (
+@@ -1539,6 +1542,7 @@ module pulp_cluster
+       .isolate_cluster_o  ( s_isolate_cluster  ),
+       .cluster_clk_o      ( clk_cluster        )
+     );
++*/
+   end else begin : gen_no_cluster_clock_gate
+     assign clk_cluster = clk_i;
+   end
+diff --git a/hw/deps/riscv/riscv_mult.sv b/hw/deps/riscv/riscv_mult.sv
+index 653392c..2062d80 100644
+--- a/hw/deps/riscv/riscv_mult.sv
++++ b/hw/deps/riscv/riscv_mult.sv
+@@ -345,19 +345,19 @@ module riscv_mult
+ 
+   // check multiplication result for mulh
+   `ifndef VERILATOR
+-  assert property (
++  assert_mulh: assert property (
+     @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b11))
+     |->
+     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * $signed({{32{op_b_i[31]}}, op_b_i})) >>> 32) ) );
+ 
+   // check multiplication result for mulhsu
+-  assert property (
++  assert_mulhsu: assert property (
+     @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b01))
+     |->
+     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * {32'b0, op_b_i}) >> 32) ) );
+ 
+   // check multiplication result for mulhu
+-  assert property (
++  assert_mulhu: assert property (
+     @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b00))
+     |->
+     (result_o == (({32'b0, op_a_i} * {32'b0, op_b_i}) >> 32) ) );

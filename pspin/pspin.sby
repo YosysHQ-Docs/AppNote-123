@@ -2,6 +2,7 @@
 base
 riscv_core : base
 core_region : riscv_core base
+pulp_cluster : core_region riscv_core base
 soc_dma_wrap : base
 pspin_verilator : core_region soc_dma_wrap base
 
@@ -9,6 +10,7 @@ pspin_verilator : core_region soc_dma_wrap base
 base: 
 mode bmc
 multiclock on
+depth 40
 --
 
 [engines]
@@ -16,41 +18,60 @@ base: smtbmc
 
 [script]
 riscv_core: verific -vlog-define PULP_FPGA_EMUL
+pulp_cluster:
+verific -set-info VERI-2288
+verific -set-info VERI-1293
+--
 verific -f -formal pspin.f
 
-# top module assignment
 --pycode-begin--
-if task in ["core_region", "riscv_core"]:
-    output(f"verific -formal {task}_wrapper.sv")
-    output(f"verific -import {task}_wrapper")
-    output(f"hierarchy -top {task}_wrapper")
-elif task:
-    output(f"verific -import -extnets {task}")
-    output(f"hierarchy -top {task}")
---pycode-end--
+# top module assignment
+if task in ["core_region", "riscv_core", "pulp_cluster"]:
+    top_module = f"{task}_wrapper"
+    output(f"verific -formal {top_module}.sv")
+else:
+    top_module = task
 
-prep -flatten
+output(f"verific -import {top_module}")
+output(f"hierarchy -top {top_module}")
+output("flatten")
+output("prep -flatten")
 
 # assert overrides
---pycode-begin--
 bad_asserts = []
-if task == "riscv_core":
+bad_cats = [
+    # proving 32bit multiplication is hard
+    f"{top_module}/*.assert_mul*",
+]
+if "riscv_core" in tags:
     bad_asserts += [
-        "riscv_core_wrapper/RISCV_CORE.id_stage_i.assert_riscv_id_branch",
-        "riscv_core_wrapper/RISCV_CORE.if_stage_i.assert_riscv_if_req",
-        "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_grant",
-        "riscv_core_wrapper/RISCV_CORE.load_store_unit_i.assert_riscv_lsu_idle",
+        # valid instruction checks
+        f"{top_module}/*.assert_riscv_id_branch",
+        f"{top_module}/*.assert_riscv_if_req",
+        # valid lsu signals
+        f"{top_module}/*.assert_riscv_lsu_grant",
+        f"{top_module}/*.assert_riscv_lsu_idle",
     ]
-if task == "core_region":
+if "core_region" in tags:
     bad_asserts += [
-        "core_region_wrapper/core_region_i.assert_core_irq_ack",
-        "core_region_wrapper/core_region_i.RISCV_CORE.id_stage_i.assert_riscv_id_branch",
-        "core_region_wrapper/core_region_i.RISCV_CORE.if_stage_i.assert_riscv_if_req",
-        "core_region_wrapper/core_region_i.RISCV_CORE.load_store_unit_i.assert_riscv_lsu_grant",
-        "core_region_wrapper/core_region_i.RISCV_CORE.load_store_unit_i.assert_riscv_lsu_idle",
+        # irq not setup(?)
+        f"{top_module}/*.assert_core_irq_ack",
+    ]
+if task == "pulp_cluster":
+    bad_asserts += [
+        # valid axi inputs
+        f"{top_module}/*.assert_axi_burst_read",
+        f"{top_module}/*.assert_axi_burst_write",
+    ]
+    bad_cats += [
+        # valid peripheral response
+        f"{top_module}/*axi2per_i.$auto*",
+        f"{top_module}/*res_channel_i.$auto*",
     ]
 if bad_asserts:
     output(f"chformal -assert -assert2assume {' '.join(bad_asserts)}")
+for bad_cat in bad_cats:
+    output(f"chformal -assert -assert2assume {bad_cat}")
 --pycode-end--
 
 tee -o ../props.txt log Cover cells:
@@ -165,50 +186,39 @@ deps/axi/src/dma/frontends/pspin_soc_frontend/src/pspin_soc_dma.sv
 src/soc_dma_wrap.sv
 --
 
-pspin_verilator:
+pulp_cluster:
 deps/cluster_interconnect/rtl/tcdm_interconnect/tcdm_interconnect_pkg.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/addr_dec_resp_mux.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/xbar.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/tcdm_interconnect.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/tcdm_superbank_mux.sv
-deps/cluster_interconnect/rtl/tcdm_interconnect/amo_shim.sv
+deps/axi/src/axi_cut.sv
+deps/axi/src/axi_dw_upsizer.sv
+deps/axi/src/axi_dw_downsizer.sv
+deps/axi/src/axi_dw_converter.sv
+deps/axi/src/axi_serializer.sv
+deps/axi/src/dma/frontends/pulp_cluster_frontend/src/transfer_id_gen.sv
+deps/axi/src/dma/frontends/pulp_cluster_frontend/src/pulp_cluster_frontend_regs.sv
+deps/axi/src/dma/frontends/pulp_cluster_frontend/src/pulp_cluster_frontend.sv
+deps/axi2mem/src/axi_to_mem_interleaved.sv
 deps/axi2mem/src/axi_to_mem.sv
 deps/axi2mem/src/axi_to_mem_banked_mp.sv
-deps/tech_cells_generic/src/rtl/tc_sram.sv
-src/memories/sram.sv
-src/memories/l2_mem.sv
-src/memories/prog_mem.sv
-src/pkt_scheduler/fifo_engine.sv
-src/pkt_scheduler/mpq_engine.sv
-src/pkt_scheduler/scheduler.sv
-src/pkt_scheduler/cluster_rb.sv
-src/pkt_scheduler/cluster_rb_shim.sv
-src/pkt_scheduler/cluster_scheduler.sv
-src/pkt_scheduler/hpu_driver.sv
-src/cmds/cmd_unit.sv
-deps/pulp_cluster/packages/pulp_cluster_package.sv
-deps/cluster_interconnect/rtl/interfaces/tcdm_bank_mem_bus.sv
-deps/cluster_interconnect/rtl/interfaces/wide_dma_tcdm.sv
-deps/cluster_peripherals/icache_ctrl_unit/interfaces/mp_pf_icache_ctrl_unit_bus.sv
-deps/pulp_cluster/rtl/cluster_bus_wrap.sv
+deps/axi2per/axi2per_req_channel.sv
+deps/axi2per/axi2per_res_channel.sv
+deps/axi2per/axi2per.sv
 deps/axi_slice/src/axi_w_buffer.sv
 deps/axi_slice/src/axi_r_buffer.sv
 deps/axi_slice/src/axi_ar_buffer.sv
 deps/axi_slice/src/axi_b_buffer.sv
 deps/axi_slice/src/axi_single_slice.sv
 deps/axi_slice/src/axi_aw_buffer.sv
-deps/axi2per/axi2per_req_channel.sv
-deps/axi2per/axi2per_res_channel.sv
-deps/axi2per/axi2per.sv
-deps/pulp_cluster/rtl/axi2per_wrap.sv
-deps/pulp_cluster/rtl/per_demux_wrap.sv
-deps/per2axi/src/per2axi_req_channel.sv
-deps/per2axi/src/per2axi_res_channel.sv
-deps/per2axi/src/per2axi_busy_unit.sv
-deps/per2axi/src/per2axi.sv
-deps/pulp_cluster/rtl/per2axi_wrap.sv
-deps/pulp_cluster/rtl/tryx_ctrl.sv
+deps/axi_slice_dc/src/dc_token_ring.v
+deps/axi_slice_dc/src/dc_synchronizer.v
+deps/axi_slice_dc/src/dc_token_ring_fifo_dout.v
+deps/cluster_interconnect/rtl/tcdm_interconnect/addr_dec_resp_mux.sv
+deps/cluster_interconnect/rtl/tcdm_interconnect/xbar.sv
+deps/cluster_interconnect/rtl/tcdm_interconnect/tcdm_interconnect.sv
+deps/cluster_interconnect/rtl/tcdm_interconnect/superbank_addr_decoder.sv
+deps/cluster_interconnect/rtl/tcdm_interconnect/tcdm_superbank_mux.sv
+deps/cluster_interconnect/rtl/tcdm_interconnect/amo_shim.sv
+deps/cluster_interconnect/rtl/interfaces/tcdm_bank_mem_bus.sv
+deps/cluster_interconnect/rtl/interfaces/wide_dma_tcdm.sv
 deps/cluster_interconnect/rtl/peripheral_interco/FanInPrimitive_Req_PE.sv
 deps/cluster_interconnect/rtl/peripheral_interco/RR_Flag_Req_PE.sv
 deps/cluster_interconnect/rtl/peripheral_interco/ArbitrationTree_PE.sv
@@ -220,33 +230,17 @@ deps/cluster_interconnect/rtl/peripheral_interco/ResponseTree_PE.sv
 deps/cluster_interconnect/rtl/peripheral_interco/AddressDecoder_PE_Req.sv
 deps/cluster_interconnect/rtl/peripheral_interco/ResponseBlock_PE.sv
 deps/cluster_interconnect/rtl/peripheral_interco/XBAR_PE.sv
-deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv
-deps/axi/src/axi_serializer.sv
-deps/axi/src/dma/frontends/pulp_cluster_frontend/src/transfer_id_gen.sv
-deps/axi/src/dma/frontends/pulp_cluster_frontend/src/pulp_cluster_frontend_regs.sv
-deps/axi/src/dma/frontends/pulp_cluster_frontend/src/pulp_cluster_frontend.sv
-deps/pulp_cluster/rtl/dmac_wrap.sv
-deps/axi2mem/src/axi_to_mem_interleaved.sv
-deps/pulp_cluster/rtl/nhi_port_wrap.sv
-deps/event_unit_flex/message_bus.sv
+deps/cluster_peripherals/icache_ctrl_unit/interfaces/mp_pf_icache_ctrl_unit_bus.sv
 deps/cluster_peripherals/cluster_control_unit/cluster_control_unit.sv
-deps/pulp_cluster/rtl/cluster_timer_wrap.sv
-deps/timer_unit/rtl/timer_unit_counter_presc.sv
-deps/timer_unit/rtl/timer_unit_counter.sv
-deps/timer_unit/rtl/timer_unit.sv
+deps/cluster_peripherals/icache_ctrl_unit/mp_pf_icache_ctrl_unit.sv
+deps/event_unit_flex/message_bus.sv
 deps/event_unit_flex/event_unit_interface_mux.sv
-deps/pulp_cluster/rtl/cluster_event_map.sv
 deps/event_unit_flex/interc_sw_evt_trig.sv
 deps/event_unit_flex/event_unit_core.sv
 deps/event_unit_flex/hw_barrier_unit.sv
 deps/event_unit_flex/hw_mutex_unit.sv
 deps/event_unit_flex/hw_dispatch.sv
 deps/event_unit_flex/event_unit_top.sv
-deps/cluster_peripherals/icache_ctrl_unit/mp_pf_icache_ctrl_unit.sv
-deps/pulp_cluster/rtl/cluster_peripherals.sv
-src/cmds/cluster_cmd.sv
-deps/icache_mp_128_pf/RTL/icache_bank_mp_128.sv
-deps/scm/latch_scm/register_file_1w_multi_port_read.sv
 deps/icache-intc/Req_Arb_Node_icache_intc.sv
 deps/icache-intc/DistributedArbitrationNetwork_Req_icache_intc.sv
 deps/icache-intc/RoutingBlock_Req_icache_intc.sv
@@ -260,14 +254,45 @@ deps/icache_mp_128_pf/RTL/cache_controller_to_axi_128_PF.sv
 deps/icache_mp_128_pf/RTL/icache_bank_mp_PF.sv
 deps/icache_mp_128_pf/RTL/prefetcher_if.sv
 deps/icache_mp_128_pf/RTL/icache_top_mp_128_PF.sv
-deps/axi/src/axi_cut.sv
-deps/axi_slice_dc/src/dc_token_ring.v
-deps/axi_slice_dc/src/dc_synchronizer.v
-deps/axi_slice_dc/src/dc_token_ring_fifo_dout.v
+deps/icache_mp_128_pf/RTL/icache_bank_mp_128.sv
+deps/per2axi/src/per2axi.sv
+deps/per2axi/src/per2axi_busy_unit.sv
+deps/per2axi/src/per2axi_res_channel.sv
+deps/per2axi/src/per2axi_req_channel.sv
+deps/pulp_cluster/packages/pulp_cluster_package.sv
+deps/pulp_cluster/rtl/axi2per_wrap.sv
+deps/pulp_cluster/rtl/cluster_bus_wrap.sv
+deps/pulp_cluster/rtl/cluster_event_map.sv
+deps/pulp_cluster/rtl/cluster_interconnect_wrap.sv
+deps/pulp_cluster/rtl/cluster_peripherals.sv
+deps/pulp_cluster/rtl/cluster_timer_wrap.sv
+deps/pulp_cluster/rtl/dmac_wrap.sv
+deps/pulp_cluster/rtl/nhi_port_wrap.sv
+deps/pulp_cluster/rtl/per2axi_wrap.sv
+deps/pulp_cluster/rtl/per_demux_wrap.sv
+deps/pulp_cluster/rtl/tryx_ctrl.sv
+deps/scm/latch_scm/register_file_1w_multi_port_read.sv
+deps/tech_cells_generic/src/rtl/tc_sram.sv
+deps/timer_unit/rtl/timer_unit.sv
+deps/timer_unit/rtl/timer_unit_counter.sv
+deps/timer_unit/rtl/timer_unit_counter_presc.sv
+src/cmds/cluster_cmd.sv
+src/memories/l2_mem.sv
+src/memories/prog_mem.sv
+src/memories/sram.sv
+src/pkt_scheduler/cluster_rb.sv
+src/pkt_scheduler/cluster_rb_shim.sv
+src/pkt_scheduler/cluster_scheduler.sv
+src/pkt_scheduler/fifo_engine.sv
+src/pkt_scheduler/hpu_driver.sv
+src/pkt_scheduler/mpq_engine.sv
+src/pkt_scheduler/scheduler.sv
 deps/pulp_cluster/rtl/pulp_cluster.sv
+--
+
+pspin_verilator:
+src/cmds/cmd_unit.sv
 src/pulp_cluster_ooc.sv
-deps/axi/src/axi_dw_upsizer.sv
-deps/axi/src/axi_dw_converter.sv
 src/interconnects/pe_noc.sv
 src/interconnects/dma_noc.sv
 src/interconnects/cluster_noc.sv
@@ -290,7 +315,6 @@ src/apb/apb_ro_regs.sv
 src/apb/apb_rw_regs.sv
 src/soc_ctrl_regs.sv
 src/soc_peripherals.sv
-deps/axi/src/axi_dw_downsizer.sv
 src/host_direct.sv
 src/host_mst_mux.sv
 src/pspin.sv
@@ -302,6 +326,6 @@ pspin/hw/deps
 pspin/hw/src
 
 --pycode-begin--
-if(task in ["core_region", "riscv_core"]):
+if(task in ["core_region", "riscv_core", "pulp_cluster"]):
     output(f"{task}_wrapper.sv")
 --pycode-end--

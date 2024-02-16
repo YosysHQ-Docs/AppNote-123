@@ -8,6 +8,7 @@ pspin:
 PATCHES = soc_dma_wrap.patch
 PATCHES += riscv_core.patch
 PATCHES += core_region.patch
+PATCHES += pulp_cluster.patch
 
 .PHONY: patch
 patch: pspin
