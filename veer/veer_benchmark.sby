@@ -19,7 +19,8 @@ bmc: smtbmc
 pdr: abc pdr
 
 [script]
-exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
+pdr: exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config -dccm_size=4 -iccm_size=4'
+~pdr: exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
 verific -f -sv veer.f
 verific -import -extnets veer_wrapper
 
@@ -30,7 +31,9 @@ prep -flatten
 # dma_axi not setup correctly
 # convert axi asserts to assume
 chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
-~target: chformal -assert -assert2assume veer_wrapper/formal_setup_inst.target
+
+# remove target assertion
+~target: chformal -assert -remove veer_wrapper/formal_setup_inst.target
 
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
