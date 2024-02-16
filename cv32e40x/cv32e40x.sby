@@ -1,10 +1,13 @@
 [tasks]
 bmc
 pdr
+cover
 
 [options]
 bmc: mode bmc
 pdr: mode prove
+cover: mode cover
+depth 40
 multiclock on
 
 # fst is faster than vcd for large designs
@@ -16,35 +19,43 @@ vcd off
 # keep going to continue after failed assertions
 bmc: smtbmc --keep-going
 pdr: abc pdr
+cover: smtbmc
 
+# Script section adapted from cv32e40x-dv/fv/jaspergold.tcl
 [script]
-verific -set-error WNL074
+# Message Severities
+## Allow omitted param defaults
 verific -set-info VERI-1818
+## Allow parameter treated as localparam
 verific -set-info VERI-2418
+## Allow empty port in module declaration
 verific -set-info VERI-8026
-verific -set-info WNL018
 
+# Analyze & Elaborate
 verific -f -sv2012 -formal cv32e40x.f
-
-# formal clock and reset setup
+## formal clock and reset setup
 verific -formal formal_setup.sv
-
-
+## import from verific to yosys
 verific -import -extnets uvmt_cv32e40x_tb
-
-# this hierarchy and flatten work around an issue with SV interfaces
+## cut mult
 hierarchy -top uvmt_cv32e40x_tb
+### ex_stage name includes parameters:
+### e.g. cv32e40x_ex_stage(B_EXT=B_NONE_cv32e40x_pkg,M_EXT=M_cv32e40x_pkg)_0
+cutpoint cv32e40x_ex_stage*_0/mul.mult_i
+## this hierarchy and flatten work around an issue with SV interfaces
+hierarchy
 flatten
-
+## prepare design
 prep -flatten
 
-# adapted from the 'assume  -from_assert' commands in jaspergold.tcl
+# Assumes
 chformal -assert2assume */*_memory_assert_i.u_assert.a_r_after_a
 chformal -assert2assume */*.obi_*_memory_assert_i.*.a_*par
 chformal -assert2assume */*integration_assert_i.a_stable_*
 chformal -assert2assume */*integration_assert_i.a_aligned_*
 chformal -assert2assume */*integration_assert_i.a_no_scan_cg
 
+# List properties
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
 tee -a ../props.txt log
@@ -54,6 +65,7 @@ tee -a ../props.txt log
 tee -a ../props.txt log Assume cells:
 tee -a ../props.txt select t:$assume -list
 
+# File cv32e40x.f adapted from cv32e40x-dv/fv/fv.flist
 [file cv32e40x.f]
 +incdir+${DV_UVMT_PATH}
 +incdir+${DV_UVME_PATH}
@@ -90,10 +102,12 @@ ${DV_UVMT_PATH}/uvmt_cv32e40x_tb_ifs.sv
 -f  ${DV_UVMT_PATH}/uvmt_cv32e40x_tb_files.flist
 
 [files]
+# copy files from cv32e40x-dv/fv/, everything else is referenced in-place
 core-v-verif/cv32e40x/fv/uvm_pkg.sv
 core-v-verif/cv32e40x/fv/defines.sv
 core-v-verif/cv32e40x/fv/dummy_pkg.sv
 
+# Clock & Reset
 [file formal_setup.sv]
 module formal_setup();
     (* gclk *) reg gclk;
