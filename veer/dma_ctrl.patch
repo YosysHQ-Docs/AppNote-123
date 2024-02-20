@@ -1,0 +1,16 @@
+diff --git a/design/dma_ctrl.sv b/design/dma_ctrl.sv
+index 9e56682..b89629b 100644
+--- a/design/dma_ctrl.sv
++++ b/design/dma_ctrl.sv
+@@ -409,10 +409,7 @@ module dma_ctrl (
+ 
+    rvoclkhdr dma_buffer_c1cgc ( .en(dma_buffer_c1_clken), .l1clk(dma_buffer_c1_clk), .* );
+    rvoclkhdr dma_free_cgc (.en(dma_free_clken), .l1clk(dma_free_clk), .*);
+-
+-`ifndef RV_FPGA_OPTIMIZE
+-   rvclkhdr dma_bus_cgc (.en(dma_bus_clk_en), .l1clk(dma_bus_clk), .*);  // ifndef FPGA_OPTIMIZE
+-`endif
++   rvoclkhdr dma_bus_cgc (.en(dma_bus_clk_en), .l1clk(dma_bus_clk), .*);
+ 
+    rvdffsc_fpga  #(1)  wrbuf_vldff     (.din(1'b1), .clear(wrbuf_rst),      .dout(wrbuf_vld),      .en(wrbuf_en),      .clk(dma_bus_clk), .clken(dma_bus_clk_en), .rawclk(clk), .*);
+    rvdffsc_fpga  #(1)  wrbuf_data_vldff(.din(1'b1), .clear(wrbuf_data_rst), .dout(wrbuf_data_vld), .en(wrbuf_data_en), .clk(dma_bus_clk), .clken(dma_bus_clk_en), .rawclk(clk), .*);

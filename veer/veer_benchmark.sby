@@ -1,7 +1,12 @@
 [tasks]
 bmc
 pdr
+cover
 target : bmc
+axi
+axi_bmc: axi bmc
+axi_pdr: axi pdr
+axi_cover: axi cover
 
 [options]
 bmc:
@@ -13,10 +18,15 @@ pdr:
 mode prove
 multiclock on
 --
+cover:
+mode cover
+multiclock on
+--
 
 [engines]
-bmc: smtbmc
+bmc: smtbmc --keep-going
 pdr: abc pdr
+cover: smtbmc
 
 [script]
 pdr: exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config -dccm_size=4 -iccm_size=4'
@@ -28,9 +38,9 @@ tee -o ../hierarchy.log hierarchy -top veer_wrapper
 
 prep -flatten
 
-# dma_axi not setup correctly
-# convert axi asserts to assume
-chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
+# dma_axi requires axi to be setup
+# otherwise, convert axi asserts to assume
+~axi: chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
 
 # remove target assertion
 ~target: chformal -assert -remove veer_wrapper/formal_setup_inst.target
@@ -75,6 +85,10 @@ module formal_setup();
 
         if (!rst)
             target: assert (!veer_wrapper.veer.dec.tlu.synchronous_flush_e4);
+        
+axi:
+        setup_dma_axi_clk: assume (veer_wrapper.dma_bus_clk_en);
+--
     end
 
 endmodule
@@ -130,8 +144,61 @@ design/veer.sv
 design/veer_wrapper.sv
 bind.sv
 
+axi:
+# Read packages first
+# This one should be alwyas read first
+amba_axi4_protocol_checker_pkg.sv
+# Then the rest of them
+amba_axi4_single_interface_requirements.sv
+amba_axi4_definition_of_axi4_lite.sv
+amba_axi4_atomic_accesses.sv
+amba_axi4_transaction_structure.sv
+amba_axi4_transaction_attributes.sv
+amba_axi4_low_power_interface.sv
+amba_axi4_low_power_channel.sv
+
+# This is a checker, not a package
+amba_axi4_write_response_dependencies.sv
+amba_axi4_exclusive_access_source_perspective.sv
+
+# The modules containing the properties
+amba_axi4_protocol_checker.sv
+amba_axi4_read_address_channel.sv
+amba_axi4_read_data_channel.sv
+amba_axi4_write_data_channel.sv
+amba_axi4_write_response_channel.sv
+amba_axi4_write_address_channel.sv
+
+# The bind file
+dma_destination.sv
+--
 
 [files]
 Cores-VeeR-EH1/design
 Cores-VeeR-EH1/configs
 Cores-VeeR-EH1/tools
+
+axi:
+# Packages
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_protocol_checker_pkg.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_low_power_channel.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_single_interface_requirements.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_definition_of_axi4_lite.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_atomic_accesses.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_transaction_structure.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_transaction_attributes.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_spec/amba_axi4_low_power_interface.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_lib/amba_axi4_write_response_dependencies.sv
+SVA-AXI4-FVIP/AXI4/src/axi4_lib/amba_axi4_exclusive_access_source_perspective.sv
+
+# Modules containing the properties
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_protocol_checker.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_read_address_channel.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_read_data_channel.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_write_data_channel.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_write_response_channel.sv
+SVA-AXI4-FVIP/AXI4/src/amba_axi4_write_address_channel.sv
+
+# Bind file
+dma_destination.sv
+--
