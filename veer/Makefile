@@ -11,6 +11,8 @@ SVA-AXI4-FVIP:
 
 CORE_PATCHES = dma_ctrl.patch
 
+clone: Cores-VeeR-EH1 SVA-AXI4-FVIP
+
 .PHONY: patch
 patch: Cores-VeeR-EH1
 	cd Cores-VeeR-EH1 \

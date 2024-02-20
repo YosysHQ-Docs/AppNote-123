@@ -21,4 +21,5 @@ unpatch:
 	$(foreach patch,$(PATCHES),&& git apply -R ../$(patch))
 
 .PHONY: clean
-clean: rm -rf pspin
+clean:
+	rm -rf pspin

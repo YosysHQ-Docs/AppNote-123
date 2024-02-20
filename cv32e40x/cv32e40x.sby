@@ -37,8 +37,8 @@ verific -f -sv2012 -formal cv32e40x.f
 verific -formal formal_setup.sv
 ## import from verific to yosys
 verific -import -extnets uvmt_cv32e40x_tb
-## cut mult
 hierarchy -top uvmt_cv32e40x_tb
+## cut mult
 ### ex_stage name includes parameters:
 ### e.g. cv32e40x_ex_stage(B_EXT=B_NONE_cv32e40x_pkg,M_EXT=M_cv32e40x_pkg)_0
 cutpoint cv32e40x_ex_stage*_0/mul.mult_i
