@@ -1,5 +1,8 @@
 .PHONY: all
-all:
+all: clone patch
+
+.PHONY: clone
+clone: Cores-VeeR-EH1 SVA-AXI4-FVIP
 
 Cores-VeeR-EH1:
 	git clone https://github.com/chipsalliance/Cores-VeeR-EH1
@@ -10,8 +13,6 @@ SVA-AXI4-FVIP:
 	cd $@ && git checkout 250f1ffd47fc1cdc4b4dd1670c6e1df58dec1b12
 
 CORE_PATCHES = dma_ctrl.patch
-
-clone: Cores-VeeR-EH1 SVA-AXI4-FVIP
 
 .PHONY: patch
 patch: Cores-VeeR-EH1

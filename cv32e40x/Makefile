@@ -1,5 +1,8 @@
 .PHONY: all
-all:
+all: clone patch
+
+.PHONY: clone
+clone: core-v-verif core-v-verif/core-v-cores/cv32e40x
 
 core-v-verif:
 	git clone https://github.com/openhwgroup/core-v-verif.git
@@ -12,6 +15,10 @@ core-v-verif/core-v-cores/cv32e40x: core-v-verif
 	&& git clone https://github.com/openhwgroup/cv32e40x
 	cd $@ \
 	&& git checkout b658fbe0b24da9b60d18d737c4ff4cf58b15dd8f
+
+.PHONY: patch unpatch
+patch: patch-dv patch-core
+unpatch: unpatch-dv unpatch-core
 
 .PHONY: patch-dv unpatch-dv
 patch-dv:
@@ -45,3 +52,9 @@ export DESIGN_RTL_DIR ?= $(CV_CORE_PKG)/rtl
 
 sby-%:
 	sby -f cv32e40x.sby $*
+
+.PHONY: clean
+clean:
+	rm -rf core-v-verif
+	rm -rf cv32e40x
+	rm -rf cv32e40x_*

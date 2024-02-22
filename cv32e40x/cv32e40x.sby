@@ -2,6 +2,7 @@
 bmc
 pdr
 cover
+pdr_demo : pdr
 
 [options]
 bmc: mode bmc
@@ -9,6 +10,12 @@ pdr: mode prove
 cover: mode cover
 depth 40
 multiclock on
+
+# timeout for demo purposes
+pdr_demo:
+expect timeout
+timeout 900
+--
 
 # fst is faster than vcd for large designs
 fst on
@@ -18,7 +25,7 @@ vcd off
 [engines]
 # keep going to continue after failed assertions
 bmc: smtbmc --keep-going
-pdr: abc pdr
+pdr: abc --keep-going pdr
 cover: smtbmc
 
 # Script section adapted from cv32e40x-dv/fv/jaspergold.tcl

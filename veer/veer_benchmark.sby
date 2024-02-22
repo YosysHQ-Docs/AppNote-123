@@ -2,7 +2,7 @@
 bmc
 pdr
 cover
-target : bmc
+fail : bmc
 axi
 axi_bmc: axi bmc
 axi_pdr: axi pdr
@@ -12,7 +12,7 @@ axi_cover: axi cover
 bmc:
 mode bmc
 multiclock on
-depth 50
+depth 40
 --
 pdr:
 mode prove
@@ -22,9 +22,10 @@ cover:
 mode cover
 multiclock on
 --
+fail: expect fail
 
 [engines]
-bmc: smtbmc --keep-going
+bmc: smtbmc
 pdr: abc pdr
 cover: smtbmc
 
@@ -43,7 +44,7 @@ prep -flatten
 ~axi: chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
 
 # remove target assertion
-~target: chformal -assert -remove veer_wrapper/formal_setup_inst.target
+~fail: chformal -assert -remove veer_wrapper/formal_setup_inst.target
 
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
