@@ -1,5 +1,5 @@
 diff --git a/tb/assertions/uvmt_cv32e40x_fencei_assert.sv b/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
-index dca9cc67..14a25a55 100644
+index dca9cc67..15cbb83a 100644
 --- a/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
 +++ b/tb/assertions/uvmt_cv32e40x_fencei_assert.sv
 @@ -178,6 +178,7 @@ module uvmt_cv32e40x_fencei_assert
@@ -64,24 +64,6 @@ index dca9cc67..14a25a55 100644
  
  
    // vplan:AckChange
-@@ -395,7 +403,7 @@ module uvmt_cv32e40x_fencei_assert
-     }
-   endgroup
- 
--  cg_reqack reqack_cg = new("reqack_cg");
-+  // cg_reqack reqack_cg = new("reqack_cg");
- 
- 
-   // vplan:UnusedFields
-@@ -416,7 +424,7 @@ module uvmt_cv32e40x_fencei_assert
-     }
-   endgroup
- 
--  cg_reserved reserved_cg = new("reserved_cg");
-+  // cg_reserved reserved_cg = new("reserved_cg");
- 
- 
- endmodule : uvmt_cv32e40x_fencei_assert
 diff --git a/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv b/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv
 index 60b5e94e..b7fa3627 100644
 --- a/tb/assertions/uvmt_cv32e40x_rvfi_assert.sv
@@ -155,19 +137,6 @@ index 813581a5..1b6e81c8 100644
  
  
  endmodule : uvmt_cv32e40x_debug_assert
-diff --git a/tb/uvmt/uvmt_cv32e40x_integration_assert.sv b/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
-index e1b98d8d..1ceba2f5 100644
---- a/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
-+++ b/tb/uvmt/uvmt_cv32e40x_integration_assert.sv
-@@ -149,7 +149,7 @@ module uvmt_cv32e40x_integration_assert
-     x_instr_data: cross cp_instr, cp_data;
-   endgroup
- 
--  cg_outstanding  outstanding_cg = new;
-+  // cg_outstanding  outstanding_cg = new;
- 
- 
- endmodule : uvmt_cv32e40x_integration_assert
 diff --git a/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv b/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv
 index b5c7edd2..a750c6eb 100644
 --- a/tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv
@@ -208,28 +177,6 @@ index d32db818..4a9a1047 100644
  
  
    // MPU output reliably reaches OBI  (vplan: not a vplan item)
-diff --git a/tb/uvmt/uvmt_cv32e40x_pma_cov.sv b/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
-index ec651743..66f2961b 100644
---- a/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
-+++ b/tb/uvmt/uvmt_cv32e40x_pma_cov.sv
-@@ -286,7 +286,7 @@ module  uvmt_cv32e40x_pma_cov
-     //Note: more crosses are possible, but bordering on impractical/infeasible
-   endgroup
- 
--  cg_mpu  mpu_cg = new;
-+  // cg_mpu  mpu_cg = new;
- 
- 
-   // RVFI Coverage Definition
-@@ -415,7 +415,7 @@ module  uvmt_cv32e40x_pma_cov
-   endgroup
- 
-   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg
--    cg_rvfi  rvfi_cg = new;
-+    // cg_rvfi  rvfi_cg = new;
-     // RVFI is 1 interface, so we don't need an exact duplicate at each MPU.
-   end
- 
 diff --git a/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv b/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv
 index e0abd6f1..a0c32cd3 100644
 --- a/tb/uvmt/uvmt_cv32e40x_triggers_assert_cov.sv
