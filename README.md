@@ -9,8 +9,8 @@ cv32e40x
 
 This design is based on the [CV32E40X Design-Verification
 environment](https://github.com/openhwgroup/cv32e40x-dv/), converting the
-existing [`Jasper
-script`](https://github.com/openhwgroup/cv32e40x-dv/blob/main/fv/jaspergold.tcl)
+existing [Jasper
+script](https://github.com/openhwgroup/cv32e40x-dv/blob/main/fv/jaspergold.tcl)
 to an equivalent SBY implementation.  This core contains around 250 cover
 statements, and 750 assertions when run in SBY.  Some adjustments were required
 to remove unsupported features from the SVA (especially those that rely on UVM
