@@ -26,7 +26,7 @@ fail: expect fail
 
 [engines]
 bmc: smtbmc
-pdr: abc pdr
+pdr: abc --keep-going pdr
 cover: smtbmc
 
 [script]
@@ -36,6 +36,8 @@ verific -f -sv veer.f
 verific -import -extnets veer_wrapper
 
 tee -o ../hierarchy.log hierarchy -top veer_wrapper
+
+cutpoint t:$mul
 
 prep -flatten
 

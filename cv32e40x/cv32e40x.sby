@@ -53,9 +53,8 @@ verific -formal formal_setup.sv
 ## import from verific to yosys
 hierarchy -top uvmt_cv32e40x_tb
 ## cut mult
-### ex_stage name includes parameters:
-### e.g. cv32e40x_ex_stage(B_EXT=B_NONE_cv32e40x_pkg,M_EXT=M_cv32e40x_pkg)_0
-cutpoint cv32e40x_ex_stage*_0/mul.mult_i
+### should match cv32e40x_ex_stage(B_EXT=B_NONE_cv32e40x_pkg,M_EXT=M_cv32e40x_pkg)_0/mul.mult_i
+cutpoint t:$mul
 ## this flatten is needed to work around an issue with SV interfaces
 flatten
 ## prepare design
