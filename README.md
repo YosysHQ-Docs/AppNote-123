@@ -7,8 +7,9 @@ complex designs.
 cv32e40x
 --------
 
-This design is based on openhwgroup/cv32e40x-dv/, converting the existing
-[`Jasper
+This design is based on the [CV32E40X Design-Verification
+environment](https://github.com/openhwgroup/cv32e40x-dv/), converting the
+existing [`Jasper
 script`](https://github.com/openhwgroup/cv32e40x-dv/blob/main/fv/jaspergold.tcl)
 to an equivalent SBY implementation.  This core contains around 250 cover
 statements, and 750 assertions when run in SBY.  Some adjustments were required
@@ -46,7 +47,7 @@ recursively.
 veer
 ----
 
-This design uses the [VeeR EH1 RISC-V Core](chipsalliance/Cores-VeeR-EH1) to
+This design uses the [VeeR EH1 RISC-V Core](https://github.com/chipsalliance/Cores-VeeR-EH1) to
 demonstrate the use of tasks and tags in SBY.  An SVA assertion is added which
 is known to fail at step 31 of BMC.
 
@@ -104,9 +105,10 @@ properties to assume properties when the AXI FVIP is not included.
 pspin
 -----
 
-The final design is a NoC, spcl/pspin.  This design is currently only setup for
-BMC, but demonstrates advanced usage of `pycode` blocks for selectively
-converting asserts to assume depending on the current task.
+The final design is the [PsPIN in-network
+accelerator](https://github.com/spcl/pspin).  This design is currently only
+setup for BMC, but demonstrates advanced usage of `pycode` blocks for
+selectively converting asserts to assume depending on the current task.
 
 ```bash
 cd pspin
