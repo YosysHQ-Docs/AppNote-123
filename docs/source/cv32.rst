@@ -1,0 +1,8 @@
+Working with a CV32 core
+------------------------
+
+This example uses the `CV32E40X Design-Verification environment`_: converting
+the existing `Jasper script`_ to an equivalent SBY implementation.
+
+.. _CV32E40X Design-Verification environment: https://github.com/openhwgroup/cv32e40x-dv/
+.. _Jasper script: https://github.com/openhwgroup/cv32e40x-dv/blob/main/fv/jaspergold.tcl

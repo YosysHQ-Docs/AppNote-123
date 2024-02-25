@@ -1,0 +1,12 @@
+[options]
+mode bmc
+
+[engines]
+smtbmc
+
+[script]
+read -formal veer.sv
+prep -top top
+
+[files]
+veer.sv
