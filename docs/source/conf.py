@@ -18,7 +18,7 @@ html_css_files = ['custom.css']
 
 # code blocks style 
 pygments_style = 'colorful'
-highlight_language = 'systemverilog'
+highlight_language = 'none'
 
 # branding for HTML
 html_theme_options = {

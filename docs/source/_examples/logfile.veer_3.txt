@@ -1,0 +1,11 @@
+SBY [veer] Writing 'veer/src/formal.sv'.
+SBY [veer] Writing 'veer/src/veer.f'.
+SBY [veer] Copy 'Cores-VeeR-EH1/design' to 'veer/src/design'.
+SBY [veer] Copy 'Cores-VeeR-EH1/configs' to 'veer/src/configs'.
+SBY [veer] Copy 'Cores-VeeR-EH1/tools' to 'veer/src/tools'.
+SBY [veer] engine_0: smtbmc
+...
+SBY [veer] summary: engine_0 (smtbmc) returned FAIL
+SBY [veer] summary: counterexample trace: veer/engine_0/trace.vcd
+SBY [veer] summary:   failed assertion veer_wrapper.veer.dma_ctrl.assert_dma_axi_awlen_check at design/dma_ctrl.sv:535.32-536.81 in step 4
+SBY [veer] DONE (FAIL, rc=2)

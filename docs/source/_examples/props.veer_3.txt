@@ -1,0 +1,10 @@
+Cover cells:
+
+Assert cells:
+dma_ctrl_default/assert_dma_axi_awlen_check
+** other cells of type $assert **
+
+Assume cells:
+formal_setup/setup_clk
+formal_setup/setup_dbg_rst_l
+formal_setup/setup_rst_l

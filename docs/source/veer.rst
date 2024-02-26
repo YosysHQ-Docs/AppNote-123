@@ -86,5 +86,76 @@ triggering on both positive and negative edges.  This means we need to enable
 multiclock mode by adding ``multiclock on`` to the ``[options]`` section.  At
 this point we can now run BMC and get our first failed counter trace.  The model
 checker can start the design in any state, including those which would normally
-be unreachable, so it might not be a very useful trace, but we have managed to
+be unreachable, so it might not be a very useful trace; but we have managed to
 successfully get the design all the way to the solvers.
+
+Formal setup
+~~~~~~~~~~~~
+
+Depending on the state of your design you may wish to specify additional
+properties for the solver.  In particular, we need to set up constraints for the
+clock and reset signals.  When using Verific we can do this by binding a module
+which provides assumptions on the input signals like so:
+
+.. literalinclude:: _examples/veer_3.sby
+    :language: sby
+    :start-at: [file formal.sv]
+    :end-before: [file veer.f]
+
+Again we are providing a file from within the SBY file and do not need to add it
+to the ``[files]`` section.  We do, however, need to tell Verific to read it. We
+do this by adding ``formal.sv`` on a new line after ``design/veer_wrapper.sv``
+in the ``veer.f`` command file.
+
+First we connect the global clock with the line ``(* gclk *) reg gclk;``.  Each
+rising edge of the global clock corresponds to one step (or frame) in the
+solver.  By inverting the ``clk`` register on each ``posedge``, each step of the
+solver alternates between a rising edge and a falling edge of the ``clk``.  Then
+we need to have an assumption which says our top level clock,
+``veer_wrapper.clk`` in this case, is equivalent to ``clk``.
+
+We can also add a reset, using a counter to control the number of cycles it
+should be held high.  As with the clock, we then add an assumption to the
+corresponding top level signal or signals.  If the reset signal is active low
+then the assumption should be ``== !rst``.  We can add constraints (assumptions)
+or any other property to any signal as follows:
+
+.. code-block:: systemverilog
+
+    always @* begin
+        // always high
+        assume (top.a);
+        // always low
+        assert (!top.b);
+        // deeply nested
+        cover (top.x.y.z);
+        // conditional
+        if (rst)
+            assume (top.c);
+    end
+
+    // SVA properties
+    assume property(@(posedge clk) disable iff(rst) $rose(top.d) |-> top.e == '0);
+
+Say you wanted to see a list of properties in the design.  This can be achieved
+with the ``select`` command in Yosys, using the ``-list`` flag and the ``tee``
+option to export to a file.  We might add something like the following to the
+``[script]`` section:
+
+.. literalinclude:: _examples/veer_3.sby
+    :language: yoscrypt
+    :start-at: tee -o
+    :end-before: [file formal.sv]
+
+Running SBY now we get the following:
+
+.. literalinclude:: _examples/props.veer_3.txt
+    :caption: ``veer/props.txt``
+
+.. literalinclude:: _examples/logfile.veer_3.txt
+    :caption: ``veer/logfile.txt``
+
+We can see from this that the ``dma_ctrl`` module is expecting a valid AXI
+connection, which is currently missing.  We could add assumptions on the inputs
+that match the assertions, but we already have perfectly good properties that we
+can use: the assertions themselves.
