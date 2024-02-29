@@ -159,3 +159,63 @@ We can see from this that the ``dma_ctrl`` module is expecting a valid AXI
 connection, which is currently missing.  We could add assumptions on the inputs
 that match the assertions, but we already have perfectly good properties that we
 can use: the assertions themselves.
+
+Changing properties
+~~~~~~~~~~~~~~~~~~~
+
+The ``chformal`` command in Yosys enables formal properties to be changed at run
+time.  With this command we can convert assertions to assumptions (as well as
+the reverse), or entirely remove properties that we are not currently interested
+in.
+
+From our previous run we know that the assert cell
+``dma_ctrl_default/assert_dma_axi_awlen_check`` fails.  We could add the
+following line after calling ``prep`` to remove it:
+
+.. code-block:: yoscrypt
+
+    chformal -remove dma_ctrl_default/assert_dma_axi_awlen_check
+
+But then we would just be left with another assertion in the same module
+failing.  This also has the side effect that if anything else in the design is
+relying on the (now missing) assertion being correct, it will also fail.
+Instead, let's add the following:
+
+.. code-block:: yoscrypt
+
+    chformal -assert -assert2assume dma_ctrl_default/assert_dma_axi_*
+
+We can see from the |cmdref for chformal|_ (or by running calling ``help
+chformal`` within Yosys) that we can specify the type of formal property to
+target, and that the final argument is a ``selection`` rather than simply the
+name of a property.  Thus we use a wildcard to match all of the ``dma_ctrl``
+properties related to AXI, limited to just assert cells, and then convert them
+to assume cells.  Provided the AXI is properly connected and valid, this ensures
+that any other properties relying on the ``dma_ctrl`` can also be verified.
+
+.. |cmdref for chformal| replace:: command reference page for ``chformal``
+.. _cmdref for chformal: https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/chformal.html
+
+The keep-going flag
+~~~~~~~~~~~~~~~~~~~
+
+At this stage of the process we may be ready to run the solver against all of
+our properties rather than stopping at the first failure, and increasing the
+depth of BMC.  We can do this by adding the ``--keep-going`` flag to our engine,
+e.g. ``smtbmc --keep-going``. In order to keep run time down there are a few
+things worth considering.  First is the ``-flatten`` flag for ``prep``.  This
+will flatten the circuit and allow additional course grain optimizations.  The
+next is adding cutpoints for elements which are computationally difficult to
+prove.  This could look like the following:
+
+.. literalinclude:: _examples/veer_4.sby
+    :language: sby
+    :end-before: tee -o
+
+Note that flattening the hierarchy means we have the ``dma_ctrl`` assertions
+need to be referenced slightly differently.  Rather than
+``dma_ctrl_default/assert...`` we now see
+``veer_wrapper/veer.dma_ctrl.assert...``.  We have also added cutpoints for all
+``$mul`` and ``$mem_v2`` cells, i.e. multipliers and memory blocks.  This does
+of course mean that any properties which rely on correct and valid multipliers
+or memories will now fail, but we can verify those separately.

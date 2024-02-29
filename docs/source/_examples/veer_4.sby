@@ -1,0 +1,101 @@
+[options]
+mode bmc
+multiclock on
+depth 40
+
+[engines]
+smtbmc --keep-going
+
+[script]
+exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
+read -f -formal veer.f
+prep -flatten -top veer_wrapper
+chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
+cutpoint t:$mul t:$mem_v2
+
+tee -o ../props.txt log Cover cells:
+tee -a ../props.txt select t:$cover -list
+tee -a ../props.txt log
+tee -a ../props.txt log Assert cells:
+tee -a ../props.txt select t:$assert -list
+tee -a ../props.txt log
+tee -a ../props.txt log Assume cells:
+tee -a ../props.txt select t:$assume -list
+
+[file formal.sv]
+module formal_setup();
+    (* gclk *) reg gclk;
+    reg clk = '0;
+    always @(posedge gclk)
+        clk <= !clk;
+
+    reg [3:0] rst_counter = 2;
+    always @(posedge clk)
+        if (rst_counter)
+            rst_counter -= 1;
+
+    wire rst = rst_counter > 0;
+
+    always @* begin
+        setup_clk: assume (veer_wrapper.clk == clk);
+        setup_rst_l: assume (veer_wrapper.rst_l == !rst);
+        setup_dbg_rst_l: assume (veer_wrapper.dbg_rst_l == !rst);
+    end
+
+endmodule
+
+bind veer_wrapper formal_setup formal_setup_inst(.*);
+
+[file veer.f]
++incdir+design/include
++incdir+snapshots/default
+snapshots/default/common_defines.vh
+design/include/veer_types.sv
+design/lib/beh_lib.sv
+design/mem.sv
+design/pic_ctrl.sv
+design/dma_ctrl.sv
+design/ifu/ifu_aln_ctl.sv
+design/ifu/ifu_compress_ctl.sv
+design/ifu/ifu_ifc_ctl.sv
+design/ifu/ifu_bp_ctl.sv
+design/ifu/ifu_ic_mem.sv
+design/ifu/ifu_mem_ctl.sv
+design/ifu/ifu_iccm_mem.sv
+design/ifu/ifu.sv
+design/dec/dec_decode_ctl.sv
+design/dec/dec_gpr_ctl.sv
+design/dec/dec_ib_ctl.sv
+design/dec/dec_tlu_ctl.sv
+design/dec/dec_trigger.sv
+design/dec/dec.sv
+design/exu/exu_alu_ctl.sv
+design/exu/exu_mul_ctl.sv
+design/exu/exu_div_ctl.sv
+design/exu/exu.sv
+design/lsu/lsu.sv
+design/lsu/lsu_bus_buffer.sv
+design/lsu/lsu_clkdomain.sv
+design/lsu/lsu_addrcheck.sv
+design/lsu/lsu_lsc_ctl.sv
+design/lsu/lsu_stbuf.sv
+design/lsu/lsu_bus_intf.sv
+design/lsu/lsu_ecc.sv
+design/lsu/lsu_dccm_mem.sv
+design/lsu/lsu_dccm_ctl.sv
+design/lsu/lsu_trigger.sv
+design/dbg/dbg.sv
+design/dmi/dmi_wrapper.v
+design/dmi/dmi_jtag_to_core_sync.v
+design/dmi/rvjtag_tap.sv
+design/lib/mem_lib.sv
+design/lib/ahb_to_axi4.sv
+design/lib/axi4_to_ahb.sv
+design/veer.sv
+design/veer_wrapper.sv
+formal.sv
+
+[files]
+Cores-VeeR-EH1/design
+Cores-VeeR-EH1/configs
+Cores-VeeR-EH1/tools
