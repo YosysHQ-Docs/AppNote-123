@@ -256,13 +256,14 @@ assumptions.  The ``axi_bmc``, ``axi_pdr``, and ``axi_cover`` tasks then
 correspond the earlier tasks but with an AXI destination verification IP
 connected.
 
-This verification IP can be found at |FVIP_repo|.  Following the example in
-|FVIP_template|_, we update the ``[files]`` section and ``veer.f`` file (omitted
-for brevity) to load the requisite files.  For the bind file, we use
-``dma_destination.sv``, a modified version of `destination template`_ configured
-to match the interface in ``dma_ctrl``.
+In the same directory as the ``veer.sby`` you have been working on, run ``git
+clone https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP`` to download the
+verification IP we will be using.  Following the example in |FVIP_template|_, we
+update the ``[files]`` section and ``veer.f`` file (omitted for brevity) to load
+the requisite files.  For the bind file, we use ``dma_destination.sv``, a
+modified version of `destination template`_ configured to match the interface in
+``dma_ctrl``.
 
-.. |FVIP_repo| replace:: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP
 .. |FVIP_template| replace:: ``yosyshq_tabbycad_example_setup.sby``
 .. _FVIP_template: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP/blob/main/AXI4/templates/yosyshq_tabbycad_example_setup.sby
 .. _destination template: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP/blob/main/AXI4/templates/axi4/yosyshq_full_destination.sv
