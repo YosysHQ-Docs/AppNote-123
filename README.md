@@ -47,41 +47,18 @@ recursively.
 veer
 ----
 
-This design uses the [VeeR EH1 RISC-V Core](https://github.com/chipsalliance/Cores-VeeR-EH1) to
-demonstrate the use of tasks and tags in SBY.  An SVA assertion is added which
-is known to fail at step 31 of BMC.
-
-```
-[options]
-..
-fail: expect fail
-..
-
-[script]
-..
-# remove target assertion
-~fail: chformal -assert -remove veer_wrapper/formal_setup_inst.target
-..
-
-[file bind.sv]
-module formal_setup();
-..
-    always @* begin
-..
-        if (!rst)
-            target: assert (!veer_wrapper.veer.dec.tlu.synchronous_flush_e4);
-..
-endmodule
-
-bind veer_wrapper formal_setup formal_setup_inst(.*);
-```
+This design uses the [VeeR EH1 RISC-V
+Core](https://github.com/chipsalliance/Cores-VeeR-EH1) to demonstrate the use of
+tasks and tags in SBY.  A guided walkthrough for creating this SBY configuration
+is provided on [Read the
+Docs](https://yosyshq.readthedocs.io/projects/ap123/en/latest/veer.html).
 
 ```bash
 cd veer
 # clone VeeR
 make Cores-VeeR-EH1
 # run SBY
-sby [-f] veer_benchmark.sby bmc # bmc, pdr, cover, or fail
+sby [-f] veer_benchmark.sby bmc # bmc, pdr, cover
 ```
 
 This design also includes a dma axi interface which, by default, is not
@@ -95,7 +72,7 @@ make SVA-AXI4-FVIP
 # patch source
 make patch
 # run SBY
-sby [-f] veer_benchmark.sby axi-bmc # bmc, pdr, or cover
+sby [-f] veer_benchmark.sby axi_bmc # bmc, pdr, or cover
 ```
 
 By default, the dma axi interface is not configured and will cause failed
