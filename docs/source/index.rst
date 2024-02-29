@@ -24,11 +24,11 @@ In general, the steps for verifying a design are as follows:
     #. Remove or ignore any sections of code which raise errors in parsing
     #. Re-run with ``sby -f <name.sby>`` to ignore existing folder
 #. Setup clock/reset and any other inputs which need to be constrained
-#. Cutpoint multipliers and any other difficult-to-prove logic
 #. Remove or convert unwanted properties
+#. Cutpoint multipliers, memories, and any other difficult-to-prove logic
 #. Add tasks for cover/prove modes
 #. Perform any other configuration steps needed
-#. Run `sby -f <name>.sby [task]`
+#. Run ``sby -f <name>.sby [task]``
 
 .. toctree::
     :caption: Examples

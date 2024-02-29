@@ -13,6 +13,12 @@ https://github.com/chipsalliance/Cores-VeeR-EH1``.
 
 .. _evaluation license: https://www.yosyshq.com/contact
 
+.. note::
+
+    For more on the .sby file format, refer to |sby_reference|.
+
+.. |sby_reference| replace:: https://yosyshq.readthedocs.io/projects/sby/en/latest/reference.html
+
 Loading the design
 ~~~~~~~~~~~~~~~~~~
 
@@ -215,7 +221,73 @@ prove.  This could look like the following:
 Note that flattening the hierarchy means we have the ``dma_ctrl`` assertions
 need to be referenced slightly differently.  Rather than
 ``dma_ctrl_default/assert...`` we now see
-``veer_wrapper/veer.dma_ctrl.assert...``.  We have also added cutpoints for all
-``$mul`` and ``$mem_v2`` cells, i.e. multipliers and memory blocks.  This does
-of course mean that any properties which rely on correct and valid multipliers
-or memories will now fail, but we can verify those separately.
+``veer_wrapper/veer.dma_ctrl.assert...``.
+
+We have also added cutpoints for all ``$mul`` and ``$mem_v2`` cells, i.e.
+multipliers and memory blocks.  The ``cutpoint`` command disconnects the inputs
+to any matching cell, and connects the outputs to ``$anyseq`` cells, allowing
+the solver to to assign any value to the outputs provided it does not invalidate
+any assume cells. This does of course mean that any properties which rely on
+correct and valid multipliers or memories will now fail, but we can verify those
+separately.
+
+Tasks and verification IP
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This final step brings us to the |veer.sby file|_ in the source repository for
+this application note.  Let's start with the newly added ``[tasks]`` section and
+the updated ``[options]`` and ``[engines]`` sections:
+
+.. |veer.sby file| replace:: ``veer.sby`` file
+.. _veer.sby file: https://github.com/YosysHQ-Docs/AppNote-123/tree/main/veer/veer.sby
+
+.. literalinclude:: ../../veer/veer.sby
+    :language: sby
+    :end-before: [script]
+
+There is now a task for each of ``bmc``, ``prove``, and ``cover`` modes.  The
+options for the ``bmc`` task are the same as we had before, while ``pdr`` and
+``cover`` select their corresponding mode and enable ``multiclock``.  For more
+on how to use tasks, refer to |sby_reference|.
+
+We also have a tag, ``axi``, which we will be using to optionally enable
+verification of the ``dma_ctrl`` AXI interface we were previously converting to
+assumptions.  The ``axi_bmc``, ``axi_pdr``, and ``axi_cover`` tasks then
+correspond the earlier tasks but with an AXI destination verification IP
+connected.
+
+This verification IP can be found at |FVIP_repo|.  Following the example in
+|FVIP_template|_, we update the ``[files]`` section and ``veer.f`` file (omitted
+for brevity) to load the requisite files.  For the bind file, we use
+``dma_destination.sv``, a modified version of `destination template`_ configured
+to match the interface in ``dma_ctrl``.
+
+.. |FVIP_repo| replace:: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP
+.. |FVIP_template| replace:: ``yosyshq_tabbycad_example_setup.sby``
+.. _FVIP_template: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP/blob/main/AXI4/templates/yosyshq_tabbycad_example_setup.sby
+.. _destination template: https://github.com/YosysHQ-GmbH/SVA-AXI4-FVIP/blob/main/AXI4/templates/axi4/yosyshq_full_destination.sv
+
+.. literalinclude:: ../../veer/veer.sby
+    :language: sby
+    :start-at: [files]
+
+Where before we were unconditionally converting the ``dma_ctrl`` AXI assertions,
+we now only want to do so if we are not running one of the ``axi_`` tasks.  The
+rest of our script section remains the same: 
+
+.. literalinclude:: ../../veer/veer.sby
+    :language: sby
+    :start-at: [script]
+    :end-before: tee -o
+
+The ``dma_ctrl`` module itself needs a minor adjustment which is included in
+|dma_ctrl.patch|_. This change removes the clock gating while still keeping the
+``dma_bus_clk`` signal connected.  And finally, we need to add a constraint to
+the ``formal.sv`` file to keep the ``veer_wrapper.dma_bus_clk_en`` high.
+
+.. |dma_ctrl.patch| replace:: ``dma_ctrl.patch``
+.. _dma_ctrl.patch: https://github.com/YosysHQ-Docs/AppNote-123/tree/main/veer/dma_ctrl.patch
+
+With this, we can now perform verification on the VeeR core via bounded and
+unbounded model checking as well as generate traces for all cover statements,
+and we can optionally enable verification of the DMA AXI controller.
