@@ -2,8 +2,6 @@
 bmc
 pdr
 cover
-fail : bmc
-axi
 axi_bmc: axi bmc
 axi_pdr: axi pdr
 axi_cover: axi cover
@@ -22,31 +20,22 @@ cover:
 mode cover
 multiclock on
 --
-fail: expect fail
 
 [engines]
-bmc: smtbmc
+bmc: smtbmc --keep-going
 pdr: abc --keep-going pdr
 cover: smtbmc
 
 [script]
-pdr: exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config -dccm_size=4 -iccm_size=4'
-~pdr: exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
-verific -f -sv veer.f
-verific -import -extnets veer_wrapper
-
-tee -o ../hierarchy.log hierarchy -top veer_wrapper
-
-cutpoint t:$mul
-
-prep -flatten
+exec -expect-return 0 -- bash -c 'RV_ROOT=$PWD ./configs/veer.config'
+read -f -formal veer.f
+prep -flatten -top veer_wrapper
 
 # dma_axi requires axi to be setup
 # otherwise, convert axi asserts to assume
 ~axi: chformal -assert -assert2assume veer_wrapper/veer.dma_ctrl.assert_dma_axi_*
 
-# remove target assertion
-~fail: chformal -assert -remove veer_wrapper/formal_setup_inst.target
+cutpoint t:$mul t:$mem_v2
 
 tee -o ../props.txt log Cover cells:
 tee -a ../props.txt select t:$cover -list
@@ -57,7 +46,7 @@ tee -a ../props.txt log
 tee -a ../props.txt log Assume cells:
 tee -a ../props.txt select t:$assume -list
 
-[file bind.sv]
+[file formal.sv]
 module formal_setup();
     (* gclk *) reg gclk;
     reg clk = '0;
@@ -72,23 +61,9 @@ module formal_setup();
     wire rst = rst_counter > 0;
 
     always @* begin
-
         setup_clk: assume (veer_wrapper.clk == clk);
         setup_rst_l: assume (veer_wrapper.rst_l == !rst);
         setup_dbg_rst_l: assume (veer_wrapper.dbg_rst_l == !rst);
-
-        setup_jtag_tck: assume (!veer_wrapper.jtag_tck);
-
-        setup_extintsrc_req: assume (!veer_wrapper.extintsrc_req);
-        setup_mpc_debug_halt_req: assume (!veer_wrapper.mpc_debug_halt_req);
-        setup_mpc_debug_run_req: assume (veer_wrapper.mpc_debug_run_req);
-        setup_mpc_reset_run_req: assume (veer_wrapper.mpc_reset_run_req);
-        setup_i_cpu_halt_req: assume (!veer_wrapper.i_cpu_halt_req);
-        setup_i_cpu_run_req: assume (!veer_wrapper.i_cpu_run_req);
-
-        if (!rst)
-            target: assert (!veer_wrapper.veer.dec.tlu.synchronous_flush_e4);
-        
 axi:
         setup_dma_axi_clk: assume (veer_wrapper.dma_bus_clk_en);
 --
@@ -145,7 +120,7 @@ design/lib/ahb_to_axi4.sv
 design/lib/axi4_to_ahb.sv
 design/veer.sv
 design/veer_wrapper.sv
-bind.sv
+formal.sv
 
 axi:
 # Read packages first
