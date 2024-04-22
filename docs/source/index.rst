@@ -9,8 +9,8 @@ therein.
 
     -  **Link to github repo** https://github.com/YosysHQ-Docs/AppNote-123
 
-    Also, **Tabby CAD Suite is required for all included examples! Ask us for an
-    evaluation license:** https://www.yosyshq.com/contact
+    Also, **Tabby CAD Suite is required for all included examples!** Ask us for an
+    evaluation license: https://www.yosyshq.com/contact
 
 In general, the steps for verifying a design are as follows:
 
