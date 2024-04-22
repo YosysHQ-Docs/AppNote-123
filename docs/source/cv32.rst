@@ -9,9 +9,9 @@ previous example, let's skip straight to using `the code in this repository`_.
 .. _Jasper script: https://github.com/openhwgroup/cv32e40x-dv/blob/main/fv/jaspergold.tcl
 .. _the code in this repository: https://github.com/YosysHQ-Docs/AppNote-123/tree/main/cv32e40x
 
-In the cv32e40x directory, run `make clone`.  This will clone the `CORE-V
+In the cv32e40x directory, run ``make clone``.  This will clone the `CORE-V
 verification project`_, the `CV32E40X Design-Verification environment`_, and
-the `CV32E40X RISC-V core`.
+the ``CV32E40X RISC-V core``.
 
 .. _CORE-V verification project: https://github.com/openhwgroup/core-v-verif
 .. _CV32E40X RISC-V core: https://github.com/openhwgroup/cv32e40x
@@ -80,9 +80,9 @@ The Yosys script
     :caption: cv32e40x.sby [script] section
 
 Comparing this side by side with the Jasper script we see that the "Assumes"
-block at the end is almost identical, switching out `assume -from_assert` for
-the Yosys command `chformal -assert2assume`.  We also see that the "Message
-Severities" block has re-used the same three `VERI-####` severity downgrades.
+block at the end is almost identical, switching out ``assume -from_assert`` for
+the Yosys command ``chformal -assert2assume``.  We also see that the "Message
+Severities" block has re-used the same three ``VERI-####`` severity downgrades.
 The "Error on file not found" is the default behaviour for Yosys/Verific so is
 unnecessary, and the "multiplier blackboxing" we handle explicitly later.  The
 first two extra downgrades are used to ignore some warnings/errors which Verific
@@ -92,18 +92,18 @@ avoid duplicating warnings that Yosys will also report later in the flow.
 This just leaves us with the "Analyze & Elaborate" and "Clock & Reset" blocks.
 Our first line looks very similar; using the sv2012 standard and loading the
 source code filelist.  Formal clock and reset setup in Yosys is more explicit
-than in Jasper and is covered in the next section.  In Yosys we refer to
-multiplier blackboxing instead as a 'cutpoint', using the command of the same
-name.  We specify that all cells of type `$mul`, i.e. any multipliers, should be
-replaced with a cutpoint; disconnecting the cell inputs and replacing the output
-drivers with `$anyseq` cells which the solver can assign any value to at each
-step.  Finally we call `prep` to prepare the design for verification.
+than in Jasper and is covered in the next section.  In Yosys we use the
+``cutpoint`` command to perform multiplier blackboxing.  We specify that all
+cells of type ``$mul``, i.e. any multipliers, should be replaced with a
+cutpoint; disconnecting the cell inputs and replacing the output drivers with
+`$anyseq` cells which the solver can assign any value to at each step.  Finally
+we call ``prep`` to prepare the design for verification.
 
 Setup clock and reset
 ^^^^^^^^^^^^^^^^^^^^^
 
 In Yosys we declare our top level clock and counter in SystemVerilog, binding
-the `formal_setup` module to our top level module to provide assumptions on
+the ``formal_setup`` module to our top level module to provide assumptions on
 those signals.
 
 .. literalinclude:: ../../cv32e40x/cv32e40x.sby
@@ -112,8 +112,9 @@ those signals.
     :caption: cv32e40x.sby [file formal_setup.sv] section
 
 In the Yosys script then we see the following line which loads this module, and
-the subsequent call to `hierarchy` ensures that the `uvmt_cv32e40x_tb` module is
-selected as the top level and the `formal_setup` module is included within it.
+the subsequent call to ``hierarchy`` ensures that the ``uvmt_cv32e40x_tb``
+module is selected as the top level and the ``formal_setup`` module is included
+within it.
 
 .. code-block:: yoscrypt
 
@@ -122,15 +123,15 @@ selected as the top level and the `formal_setup` module is included within it.
 Patching the source
 ^^^^^^^^^^^^^^^^^^^
 
-As mentioned previously, Verific does not support UVM and running SBY at this
+The Verific front-end for Yosys does not support UVM, and running SBY at this
 point will result in errors.  While there are some error messages that we can
 simply downgrade and have Verific ignore them while continuing to parse the
 design, there are others which are not recoverable and we need to comment out
 the relevant source code.
 
 Included in the source repository for this documentation are two patches for the
-cv32 verification setup.  The `core.patch` disables code in the core itself,
-while `dv.patch` disables code in the testbench.  The offending code is
+cv32 verification setup.  The ``core.patch`` disables code in the core itself,
+while ``dv.patch`` disables code in the testbench.  The offending code is
 typically a formal property which performs an assignment when triggered, a
 feature not supported in Verific.  We also adjust the clock gate to a form that
 is supported.
@@ -141,8 +142,8 @@ Running SBY
 Finally we are able to run the design in SBY and get traces for cover statements
 and failing properties.  Because of the complex nested filelist structure of the
 cv32 core and verification environment, we have opted for a similar reliance on
-variables exported by makefile.  To run SBY, call `make sby-[task]` in the
-cv32e40x directory where `[task]` is one of `bmc | pdr | cover` as in the
+variables exported by makefile.  To run SBY, call ``make sby-[task]`` in the
+cv32e40x directory where ``[task]`` is one of ``bmc | pdr | cover`` as in the
 previous VeeR core example.
 
 .. note::
