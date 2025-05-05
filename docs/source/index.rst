@@ -1,5 +1,5 @@
-AppNote 123
-===========
+Advanced SBY Use by Example
+===========================
 
 This application note provides a guided example of how to use SBY with large and
 complex designs; looking at how to configure the tools and the limitations
@@ -19,10 +19,12 @@ In general, the steps for verifying a design are as follows:
 #. Run ``sby --init-config-file <name>``
 #. Add source files to ``[files]`` section
 #. Update ``[script]`` section to read source files and prepare top level
-    module
+   module
 #. Run ``sby <name>.sby``
-    #. Remove or ignore any sections of code which raise errors in parsing
-    #. Re-run with ``sby -f <name.sby>`` to ignore existing folder
+
+   #. Remove or ignore any sections of code which raise errors in parsing
+   #. Re-run with ``sby -f <name.sby>`` to ignore existing folder
+
 #. Setup clock/reset and any other inputs which need to be constrained
 #. Remove or convert unwanted properties
 #. Cutpoint multipliers, memories, and any other difficult-to-prove logic
