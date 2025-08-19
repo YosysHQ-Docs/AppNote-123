@@ -37,6 +37,8 @@ verific -set-info VERI-1818
 verific -set-info VERI-2418
 ## Allow empty port in module declaration
 verific -set-info VERI-8026
+## Ingore unsynthesized strings
+verific -set-info VERI-2326
 
 # Additional warning/error messages
 ## Ignore covergroup warnings
