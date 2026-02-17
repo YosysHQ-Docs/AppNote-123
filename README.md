@@ -58,7 +58,7 @@ cd veer
 # clone VeeR
 make Cores-VeeR-EH1
 # run SBY
-sby [-f] veer_benchmark.sby bmc # bmc, pdr, cover
+sby [-f] veer.sby bmc # bmc, pdr, cover
 ```
 
 This design also includes a dma axi interface which, by default, is not
@@ -72,7 +72,7 @@ make SVA-AXI4-FVIP
 # patch source
 make patch
 # run SBY
-sby [-f] veer_benchmark.sby axi_bmc # bmc, pdr, or cover
+sby [-f] veer.sby axi_bmc # bmc, pdr, or cover
 ```
 
 By default, the dma axi interface is not configured and will cause failed
@@ -94,5 +94,5 @@ make pspin
 # patch source
 make patch
 # run SBY
-sby [-f] pspin_test.sby riscv-core # riscv-core, core_region, or pulp_cluster
+sby [-f] pspin_test.sby riscv_core # riscv_core, core_region, or pulp_cluster
 ```
